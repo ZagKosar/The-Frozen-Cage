@@ -41,6 +41,7 @@ namespace Scripts.WindowSwitcher
         {
             _windowsPrefabsDictionary = new Dictionary<string, WindowPanel>();
             _windowsDictionary = new Dictionary<string, WindowPanel>();
+            _windowsStack = new Stack<WindowPanel>();
 
             foreach (var window in _windows)
                 _windowsPrefabsDictionary[window.Name] = window.Panel;
@@ -63,6 +64,16 @@ namespace Scripts.WindowSwitcher
 
             _windowsStack.Push(window);
             window.Open();
+        }
+
+        public void CloseLast()
+        {
+            if (_windowsStack.Count <= 1)
+                return;
+
+            var lastWindow = _windowsStack.Pop();
+            
+            lastWindow.Close();
         }
     }
 
