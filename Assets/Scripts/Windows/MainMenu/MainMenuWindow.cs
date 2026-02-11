@@ -10,12 +10,12 @@ public class MainMenuWindow : WindowPanel
     public override void Open()
     {
         gameObject.SetActive(true);
-
         _settingsButton.onClick.AddListener(OpenSettings);
     }
 
     public override void Close()
     {
+        _settingsButton.onClick.RemoveListener(OpenSettings);
         gameObject.SetActive(false);
     }
 
