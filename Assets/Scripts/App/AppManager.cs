@@ -3,6 +3,8 @@ using UnityEngine;
 
 public class AppManager : MonoBehaviour
 {
+    [SerializeField] private WindowSwitcher _windowSwitcher;
+
     private void Awake()
     {
         DontDestroyOnLoad(this);
@@ -10,11 +12,12 @@ public class AppManager : MonoBehaviour
 
     void Start()
     {
-        WindowSwitcher.Instance.Initialize();
+        _windowSwitcher.Initialize();
 
         OpenWindow(new UIEvents.OpenWindow() { Name = "main_menu_panel" });
 
         EventManager.Instance.Subscribe<UIEvents.OpenWindow>(OpenWindow);
+        EventManager.Instance.Subscribe<UIEvents.CloseLastWindow>(CloseLastWindow);
     }
 
     void Update()
@@ -24,6 +27,11 @@ public class AppManager : MonoBehaviour
 
     private void OpenWindow(UIEvents.OpenWindow data)
     {
-        WindowSwitcher.Instance.ShowWindow(data.Name);
+        _windowSwitcher.ShowWindow(data.Name);
+    }
+
+    private void CloseLastWindow(UIEvents.CloseLastWindow data)
+    {
+        _windowSwitcher.CloseLast();
     }
 }

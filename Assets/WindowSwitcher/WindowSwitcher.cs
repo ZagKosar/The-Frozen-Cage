@@ -12,19 +12,6 @@ namespace Scripts.WindowSwitcher
         [SerializeField] private List<Window> _windows;
         [SerializeField] private Transform _container;
 
-        private static WindowSwitcher s_instance;
-        public static WindowSwitcher Instance
-        {
-            get
-            {
-                if (!s_instance)
-                {
-                    s_instance = FindFirstObjectByType<WindowSwitcher>();
-                }
-                return s_instance;
-            }
-        }
-
         private Dictionary<string, WindowPanel> _windowsPrefabsDictionary;
         private Dictionary<string, WindowPanel> _windowsDictionary;
 
@@ -32,9 +19,7 @@ namespace Scripts.WindowSwitcher
 
         private void Awake()
         {
-            s_instance = this;
-
-            DontDestroyOnLoad(s_instance);
+            DontDestroyOnLoad(this);
         }
 
         public void Initialize()
@@ -55,6 +40,9 @@ namespace Scripts.WindowSwitcher
                 window = Instantiate(_windowsPrefabsDictionary[name], _container);
                 _windowsDictionary[name] = window;
             }
+
+            if (_windowsStack.Count > 0 && _windowsStack.Peek() == window)
+                return;
 
             if (closePrevious && _windowsStack.Count > 0)
             {

@@ -48,7 +48,7 @@ public class EventManager
 
         foreach (var subscriber in subscribers)
         {
-            ((Action<T>)subscriber)?.Invoke(data);        
+            ((Action<T>)subscriber)?.Invoke(data);
         }
     }
 }

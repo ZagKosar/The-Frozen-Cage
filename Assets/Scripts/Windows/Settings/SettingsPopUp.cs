@@ -20,6 +20,6 @@ public class SettingsPopUp : WindowPanel
 
     private void CloseSettings()
     {
-        WindowSwitcher.Instance.CloseLast();
+        EventManager.Instance.Invoke(new UIEvents.CloseLastWindow());
     }
 }

@@ -691,6 +691,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ead40633e3c76c34c9176d11aba65a05, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AppManager
+  _windowSwitcher: {fileID: 897877753}
 --- !u!4 &1137122850
 Transform:
   m_ObjectHideFlags: 0

@@ -6,4 +6,15 @@ public class UIEvents
     {
         public string Name;
     }
+
+    public struct CloseWindow
+    {
+        public string Name;
+    }
+
+    public struct CloseLastWindow
+    {
+
+    }
+
 }
