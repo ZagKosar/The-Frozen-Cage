@@ -9,6 +9,8 @@ namespace Scripts.WindowSwitcher
 {
     public abstract class WindowPanel: MonoBehaviour
     {
+        public abstract void Load();
+        public abstract void Destroy();
         public abstract void Open();
         public abstract void Close();
 

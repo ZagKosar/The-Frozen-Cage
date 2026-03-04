@@ -1051,7 +1051,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4dde32a14c4484c41a4663eeed15645e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MainMenuWindow
+  _startNewGameButton: {fileID: 4490959988511971091}
   _settingsButton: {fileID: 4027429308380560284}
+  _quitGameButton: {fileID: 3293054437172683432}
 --- !u!1 &7214640335867322978
 GameObject:
   m_ObjectHideFlags: 0
@@ -1426,7 +1428,7 @@ GameObject:
   - component: {fileID: 3293054437172683432}
   - component: {fileID: 336888140467767513}
   m_Layer: 5
-  m_Name: BtnExit
+  m_Name: BtnQuit
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

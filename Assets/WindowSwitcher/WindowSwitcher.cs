@@ -38,6 +38,8 @@ namespace Scripts.WindowSwitcher
             if (!_windowsDictionary.TryGetValue(name, out var window))
             {
                 window = Instantiate(_windowsPrefabsDictionary[name], _container);
+                window.Load();
+
                 _windowsDictionary[name] = window;
             }
 
@@ -52,6 +54,24 @@ namespace Scripts.WindowSwitcher
 
             _windowsStack.Push(window);
             window.Open();
+        }
+
+        public void CloseWindow(string name)
+        {
+            if(!_windowsDictionary.TryGetValue(name, out var window))
+                return;
+
+            window.Close();
+
+            if (_windowsStack.Count == 0)
+                return;
+
+            var filtered = _windowsStack.Where(w => w != window).Reverse().ToList();
+
+            _windowsStack.Clear();
+
+            foreach (var w in filtered)
+                _windowsStack.Push(w);
         }
 
         public void CloseLast()

@@ -26,7 +26,7 @@ public class Switcher : MonoBehaviour
         _button.onClick.RemoveListener(OnClick);
     }
 
-    public void SetState(bool isOn)
+    public void SetWithoutNotify(bool isOn)
     {
         _isOn = isOn;
         _slider.value = isOn ? 1 : 0;

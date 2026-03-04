@@ -17,4 +17,14 @@ public class UIEvents
 
     }
 
+    public struct QuitGame
+    {
+
+    }
+
+    public struct StartNewGame
+    {
+
+    }
+
 }
