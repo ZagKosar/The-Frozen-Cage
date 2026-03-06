@@ -17,8 +17,14 @@ namespace Scripts.App
 
         public void Update(float deltaTime)
         {
-            _time += deltaTime;
             _deltaTime = deltaTime;
+            _time += deltaTime;
+        }
+
+        public void Reset()
+        {
+            _time = 0f;
+            _deltaTime = 0f;
         }
     }
 }

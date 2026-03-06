@@ -9,7 +9,11 @@ public class SettingsPopUp : WindowPanel
 {
     [Header("Game")]
     [SerializeField] private Slider _mouseSensitivitySlider;
+    [SerializeField] private TMP_Text _mouseSensitivityText;
+
     [SerializeField] private Slider _textSpeedSlider;
+    [SerializeField] private TMP_Text _textSpeedText;
+
     [SerializeField] private Switcher _subtitlesSwitcher;
 
     [Header("Graphics")]
@@ -65,6 +69,10 @@ public class SettingsPopUp : WindowPanel
     public override void Open()
     {
         gameObject.SetActive(true);
+
+        _mouseSensitivitySlider.onValueChanged.AddListener(OnMouseSensitivityChanged);
+        _textSpeedSlider.onValueChanged.AddListener(OnTextSpeedChanged);
+        _subtitlesSwitcher.Switch += OnSubtitlesChanged;
 
         _screenModeDropdown.onValueChanged.AddListener(OnScreenModeChanged);
         _resolutionDropdown.onValueChanged.AddListener(OnResolutionChanged);
@@ -184,6 +192,33 @@ public class SettingsPopUp : WindowPanel
         return 0;
     }
 
+    //game
+    private void OnMouseSensitivityChanged(float value)
+    {
+        var gameSettings = DependencyContainer.ClientSettings.GameSettings;
+
+        gameSettings.MouseSensitivity = value;
+
+        _mouseSensitivityText.text = value.ToString("F2");
+    }
+
+    private void OnTextSpeedChanged(float value)
+    {
+        var gameSettings = DependencyContainer.ClientSettings.GameSettings;
+
+        gameSettings.TextSpeed = value;
+
+        _textSpeedText.text = value.ToString("F2");
+    }
+
+    private void OnSubtitlesChanged(bool value)
+    {
+        var gameSettings = DependencyContainer.ClientSettings.GameSettings;
+
+        gameSettings.Subtitles = value;
+    }
+
+    //video
     private void OnScreenModeChanged(int index)
     {
         index = Mathf.Clamp(index, 0, _screenModes.Count - 1);

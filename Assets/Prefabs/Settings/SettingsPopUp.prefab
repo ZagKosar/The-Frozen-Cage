@@ -3207,7 +3207,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SettingsPopUp
   _mouseSensitivitySlider: {fileID: 3371102312719857876}
+  _mouseSensitivityText: {fileID: 2234161828790161322}
   _textSpeedSlider: {fileID: 3438392852349226730}
+  _textSpeedText: {fileID: 3327295718898593825}
   _subtitlesSwitcher: {fileID: 4452272580367162397}
   _screenModeDropdown: {fileID: 8483810349607374041}
   _resolutionDropdown: {fileID: 2729305875734086704}

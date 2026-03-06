@@ -36,6 +36,7 @@ namespace Scripts.App
         public void Initialize()
         {
             _actionAsset = new();
+            _actionAsset.Enable();
 
             //Player
             _actionAsset.Player.Move.performed += callback => OnMove?.Invoke(callback.ReadValue<Vector2>());
