@@ -38,6 +38,7 @@ public class SettingsPopUp : WindowPanel
     [Header("Utils")]
     [SerializeField] private Button _closeButton;
     [SerializeField] private Button _saveButton;
+    [SerializeField] private Button _defaultButton;
 
     private ClientSettings _lastClientSettings;
 
@@ -85,6 +86,7 @@ public class SettingsPopUp : WindowPanel
 
         _closeButton.onClick.AddListener(CloseSettings);
         _saveButton.onClick.AddListener(SaveSettings);
+        _defaultButton.onClick.AddListener(ResetToDefault);
 
         LoadSettings();
 
@@ -93,6 +95,10 @@ public class SettingsPopUp : WindowPanel
 
     public override void Close()
     {
+        _mouseSensitivitySlider.onValueChanged.RemoveListener(OnMouseSensitivityChanged);
+        _textSpeedSlider.onValueChanged.RemoveListener(OnTextSpeedChanged);
+        _subtitlesSwitcher.Switch -= OnSubtitlesChanged;
+
         _screenModeDropdown.onValueChanged.RemoveListener(OnScreenModeChanged);
         _resolutionDropdown.onValueChanged.RemoveListener(OnResolutionChanged);
         _brightnessGammaSlider.onValueChanged.RemoveListener(OnBrightnessChanged);
@@ -104,6 +110,7 @@ public class SettingsPopUp : WindowPanel
 
         _closeButton.onClick.RemoveListener(CloseSettings);
         _saveButton.onClick.RemoveListener(SaveSettings);
+        _defaultButton.onClick.RemoveListener(ResetToDefault);
 
         gameObject.SetActive(false);
 
@@ -159,6 +166,18 @@ public class SettingsPopUp : WindowPanel
     {
         var clientSettings = DependencyContainer.ClientSettings;
 
+        // === Game ===
+        var gameSettings = clientSettings.GameSettings;
+
+        _mouseSensitivitySlider.SetValueWithoutNotify(gameSettings.MouseSensitivity);
+        _mouseSensitivityText.text = gameSettings.MouseSensitivity.ToString("F2");
+
+        _textSpeedSlider.SetValueWithoutNotify(gameSettings.TextSpeed);
+        _textSpeedText.text = gameSettings.TextSpeed.ToString("F2");
+
+        _subtitlesSwitcher.SetWithoutNotify(gameSettings.Subtitles);
+
+        // === Graphics ===
         var graphicsSettings = clientSettings.GraphicsSettings;
 
         int modeIndex = Mathf.Max(0, _screenModes.IndexOf(graphicsSettings.ScreenMode));
@@ -172,13 +191,14 @@ public class SettingsPopUp : WindowPanel
 
         _vSyncSwitcher.SetWithoutNotify(graphicsSettings.VSync);
 
-        _masterVolumeSlider.value = clientSettings.AudioSettings.MasterVolume;
+        // === Audio ===
+        _masterVolumeSlider.SetValueWithoutNotify(clientSettings.AudioSettings.MasterVolume);
         _masterVolumeText.text = (clientSettings.AudioSettings.MasterVolume * 100).ToString("F0") + "%";
 
-        _musicVolumeSlider.value = clientSettings.AudioSettings.MusicVolume;
+        _musicVolumeSlider.SetValueWithoutNotify(clientSettings.AudioSettings.MusicVolume);
         _musicVolumeText.text = (clientSettings.AudioSettings.MusicVolume * 100).ToString("F0") + "%";
 
-        _sfxVolumeSlider.value = clientSettings.AudioSettings.SFXVolume;
+        _sfxVolumeSlider.SetValueWithoutNotify(clientSettings.AudioSettings.SFXVolume);
         _sfxVolumeText.text = (clientSettings.AudioSettings.SFXVolume * 100).ToString("F0") + "%";
     }
 
@@ -290,5 +310,22 @@ public class SettingsPopUp : WindowPanel
         _lastClientSettings = clientSettings.Clone();
 
         clientSettings.Save();
+    }
+
+    private void ResetToDefault()
+    {
+        var defaultSettings = ClientSettings.Default;
+        var clientSettings = DependencyContainer.ClientSettings;
+
+        clientSettings.CopyFrom(defaultSettings);
+
+        DependencyContainer.GraphicsMaster.ApplyAll();
+
+        var audio = DependencyContainer.AudioMaster;
+        audio.SetMasterVolume(clientSettings.AudioSettings.MasterVolume);
+        audio.SetMusicVolume(clientSettings.AudioSettings.MusicVolume);
+        audio.SetSFXVolume(clientSettings.AudioSettings.SFXVolume);
+
+        LoadSettings();
     }
 }

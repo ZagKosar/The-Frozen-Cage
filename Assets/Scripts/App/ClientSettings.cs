@@ -16,6 +16,13 @@ public class ClientSettings
     public GraphicsSettings GraphicsSettings => _graphicsSettings;
     public AudioSettings AudioSettings => _audioSettings;
 
+    public static ClientSettings Default => new ClientSettings
+    {
+        _gameSettings = GameSettings.Default,
+        _graphicsSettings = GraphicsSettings.Default,
+        _audioSettings = AudioSettings.Default
+    };
+
     public void Save()
     {
         var savePath = Path.Combine(Application.persistentDataPath, "Settings");
@@ -53,7 +60,7 @@ public class ClientSettings
     public ClientSettings Clone()
     {
         var clone = new ClientSettings();
-        clone._gameSettings = _gameSettings;
+        clone._gameSettings = _gameSettings.Clone();
         clone._graphicsSettings = _graphicsSettings.Clone();
         clone._audioSettings = _audioSettings.Clone();
         return clone;
@@ -68,15 +75,13 @@ public class ClientSettings
         _audioSettings.CopyFrom(other._audioSettings);
         
     }
-    //!!!
+
     public bool EqualsTo(ClientSettings other, float epsilon = 0.0001f)
     {
-        if (other == null) return false;
+        if (other == null) return true;
 
         if (_gameSettings == null || other._gameSettings == null) return false;
-
         if (_graphicsSettings == null || other._graphicsSettings == null) return false;
-
         if (_audioSettings == null || other._audioSettings == null) return false;
 
         return _gameSettings.EqualsTo(other._gameSettings, epsilon)
@@ -124,6 +129,13 @@ public class GameSettings
         }
     }
 
+    public static GameSettings Default => new GameSettings
+    {
+        MouseSensitivity = 0.5f,
+        TextSpeed = 0.5f,
+        Subtitles = true
+    };
+
     public GameSettings Clone()
     {
         return new GameSettings
@@ -147,10 +159,9 @@ public class GameSettings
     {
         if (other == null) return false;
 
-        return _textSpeed == other._textSpeed
-               && _subtitles == other._subtitles
-               && Mathf.Abs(_mouseSensitivity - other._mouseSensitivity) <= epsilon
-               && Mathf.Abs(_textSpeed - other._textSpeed) <= epsilon;
+        return Mathf.Abs(_mouseSensitivity - other._mouseSensitivity) <= epsilon
+               && Mathf.Abs(_textSpeed - other._textSpeed) <= epsilon
+               && _subtitles == other._subtitles;
     }
 }
 
@@ -194,6 +205,15 @@ public class GraphicsSettings
         get => _vSync;
         set => _vSync = value;
     }
+
+    public static GraphicsSettings Default => new GraphicsSettings
+    {
+        ScreenMode = FullScreenMode.FullScreenWindow,
+        ResolutionWidth = Screen.currentResolution.width,
+        ResolutionHeight = Screen.currentResolution.height,
+        Brightness = 0.5f,
+        VSync = true
+    };
 
     public GraphicsSettings Clone()
     {
@@ -269,6 +289,13 @@ public class AudioSettings
             _sfxVolume = value;
         }
     }
+
+    public static AudioSettings Default => new AudioSettings
+    {
+        MasterVolume = 0.8f,
+        MusicVolume = 0.8f,
+        SFXVolume = 0.8f
+    };
 
     public AudioSettings Clone()
     {

@@ -17,6 +17,10 @@ namespace Scripts.Game
 
         private void Start()
         {
+            var inputHandler = DependencyContainer.InputHandler;
+
+            inputHandler.OnPause += OnPause;
+            
             _gameTime = DependencyContainer.GameTime;
 
             _cameraController.SetMouseLock(true);
@@ -27,6 +31,16 @@ namespace Scripts.Game
             if (_isPaused) return;
 
             _gameTime.Update(Time.deltaTime);
+        }
+
+        private void OnPause()
+        {
+            _isPaused = !_isPaused;
+
+            if (_isPaused)
+                EventManager.Instance.Invoke(new UIEvents.OpenWindow() { Name = "PauseMenu" });
+            else
+                EventManager.Instance.Invoke(new UIEvents.CloseWindow() { Name = "PauseMenu" });
         }
     }
 }

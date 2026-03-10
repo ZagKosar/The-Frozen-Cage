@@ -28,6 +28,9 @@ namespace Scripts.App
         public event Action OnNext;
         public event Action OnPrevious;
 
+        // Game
+        public event Action OnPause;
+
         private void Awake()
         {
             DontDestroyOnLoad(this);
@@ -38,7 +41,7 @@ namespace Scripts.App
             _actionAsset = new();
             _actionAsset.Enable();
 
-            //Player
+            // Player
             _actionAsset.Player.Move.performed += callback => OnMove?.Invoke(callback.ReadValue<Vector2>());
             _actionAsset.Player.Move.canceled += callback => OnMove?.Invoke(Vector2.zero);
 
@@ -52,7 +55,7 @@ namespace Scripts.App
             _actionAsset.Player.Sprint.started += _ => OnSprintStart?.Invoke();
             _actionAsset.Player.Sprint.canceled += _ => OnSprintStop?.Invoke();
 
-            //UI
+            // UI
             _actionAsset.UI.Submit.performed += _ => OnSubmit?.Invoke();
 
             _actionAsset.UI.Cancel.performed += _ => OnCancel?.Invoke();
@@ -60,6 +63,10 @@ namespace Scripts.App
             _actionAsset.UI.Next.performed += _ => OnNext?.Invoke();
 
             _actionAsset.UI.Previous.performed += _ => OnPrevious?.Invoke();
+
+            // Game
+
+            _actionAsset.Game.Pause.performed += _ => OnPause?.Invoke();
         }
     }
 }
