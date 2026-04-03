@@ -11,7 +11,7 @@ public class ClientSettings
     [SerializeField] private GameSettings _gameSettings = new();
     [SerializeField] private GraphicsSettings _graphicsSettings = new();
     [SerializeField] private AudioSettings _audioSettings = new();
-    
+
     public GameSettings GameSettings => _gameSettings;
     public GraphicsSettings GraphicsSettings => _graphicsSettings;
     public AudioSettings AudioSettings => _audioSettings;
@@ -73,7 +73,7 @@ public class ClientSettings
         _gameSettings.CopyFrom(other._gameSettings);
         _graphicsSettings.CopyFrom(other._graphicsSettings);
         _audioSettings.CopyFrom(other._audioSettings);
-        
+
     }
 
     public bool EqualsTo(ClientSettings other, float epsilon = 0.0001f)

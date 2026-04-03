@@ -29,7 +29,7 @@ namespace Scripts.Game
         private bool _isSprinting;
         private bool _isCrouching;
         private bool _isCrouchingPress;
-        private float _targetHeight;
+ 
 
         private Tween _heightTween;
 
@@ -51,8 +51,6 @@ namespace Scripts.Game
             inputHandler.OnSprintStop += OnSprintStop;
             inputHandler.OnCrouchStart += OnCrouchStart;
             inputHandler.OnCrouchStop += OnCrouchStop;
-
-            _targetHeight = _standHeight;
         }
 
         private void FixedUpdate()
@@ -127,6 +125,7 @@ namespace Scripts.Game
 
         private float GetCurrentSpeed()
         {
+            if (_gameTime.DeltaTime == 0) return 0;
             if (_isCrouching) return _crouchSpeed;
             if (IsSprinting) return _sprintSpeed;
             return _walkSpeed;

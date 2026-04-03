@@ -5,6 +5,9 @@ using UnityEngine;
 public class EventManager
 {
     private static EventManager s_instance;
+    /// <summary>
+    /// Получение созданного объекта
+    /// </summary>
     public static EventManager Instance
     {
         get
@@ -15,7 +18,11 @@ public class EventManager
     }
 
     private Dictionary<Type, List<Delegate>> eventSubscribers = new Dictionary<Type, List<Delegate>>();
-
+    /// <summary>
+    /// Subscribe - подписка что бы ждать Invoke()
+    /// </summary>
+    /// <typeparam name="T">Вид события</typeparam>
+    /// <param name="action"> Действие которое срабатывает при получении события(звонка) </param>
     public void Subscribe<T>(Action<T> action)
     {
         var type = typeof(T);

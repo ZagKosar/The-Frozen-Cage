@@ -1,4 +1,5 @@
 using Scripts.App;
+using Scripts.Events.Game;
 using Scripts.Game;
 using UnityEngine;
 
@@ -12,6 +13,8 @@ public class CameraController : MonoBehaviour
     [SerializeField] private float _bodyMaxHeight = 2f;
     [SerializeField] private float _cameraHeightOffset = -0.2f;
     [SerializeField] private float _cameraSmooth = 10f;
+    [SerializeField] private float _interactionDistance = 4f;
+    [SerializeField] private LayerMask _interactionsLayers;
 
     [Header("HeadBob")]
     [SerializeField] private float _amplitude = 0.05f;
@@ -31,16 +34,43 @@ public class CameraController : MonoBehaviour
         if (_camera == null)
             _camera = Camera.main;
 
-        _camera.transform.position = transform.position;
-        _camera.transform.parent = _body;
-
         inputHandler.OnLook += OnLook;
         inputHandler.OnMove += OnMove;
+
+        Invoke(nameof(WireCameraToPlayer), 0f);
     }
 
     void Update()
     {
+        CheckInteractableHover();
+
         UpdateCameraHeight();
+    }
+
+    private void WireCameraToPlayer()
+    {
+        _camera.transform.parent = _body;
+        _camera.transform.localPosition = Vector3.zero;
+    }
+
+    private void CheckInteractableHover()
+    {
+        var ray = _camera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
+        var isHit = Physics.Raycast(ray, out var hit, _interactionDistance, _interactionsLayers);
+        if (isHit && hit.collider.CompareTag("Interactable"))
+        {
+            var interactable = hit.collider.GetComponent<Interactable>();
+            if (interactable == null)
+            {
+                return;
+            }
+
+            EventManager.Instance.Invoke(new GameEvent.InteractHover() { Interact = interactable });
+        }
+        else
+        {
+            EventManager.Instance.Invoke(new GameEvent.InteractHoverEnd() { Interact = null });
+        }
     }
 
     private void UpdateCameraHeight()

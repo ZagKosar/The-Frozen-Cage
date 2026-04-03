@@ -30,6 +30,7 @@ namespace Scripts.App
 
         // Game
         public event Action OnPause;
+        public event Action OnInventory;
 
         private void Awake()
         {
@@ -39,6 +40,12 @@ namespace Scripts.App
         public void Initialize()
         {
             _actionAsset = new();
+
+#if UNITY_EDITOR
+            _actionAsset.Game.Pause.ApplyBindingOverride("<Keyboard>/v", path: "<Keyboard>/escape");
+            //_actionAsset.Player.Interact.ApplyBindingOverride("<Keyboard>/c", path: "<Keyboard>/f");
+#endif
+
             _actionAsset.Enable();
 
             // Player
@@ -67,6 +74,7 @@ namespace Scripts.App
             // Game
 
             _actionAsset.Game.Pause.performed += _ => OnPause?.Invoke();
+            _actionAsset.Game.Inventory.performed += _ => OnInventory?.Invoke();
         }
     }
 }

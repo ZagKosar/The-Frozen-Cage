@@ -38,6 +38,7 @@ public class AppManager : MonoBehaviour
         EventManager.Instance.Subscribe<UIEvents.CloseLastWindow>(CloseLastWindow);
         EventManager.Instance.Subscribe<UIEvents.QuitGame>(QuitGame);
         EventManager.Instance.Subscribe<UIEvents.StartNewGame>(StartNewGame);
+        EventManager.Instance.Subscribe<UIEvents.ExitToMainMenu>(ExitToMainMenu);
     }
 
     void Update()
@@ -72,5 +73,14 @@ public class AppManager : MonoBehaviour
     private void StartNewGame(UIEvents.StartNewGame data)
     {
         SceneManager.LoadScene(1);
+    }
+
+    private void ExitToMainMenu(UIEvents.ExitToMainMenu data)
+    {
+        EventManager.Instance.Invoke(new UIEvents.CloseWindow() { Name = "pause_window" });
+        EventManager.Instance.Invoke(new UIEvents.CloseWindow() { Name = "inventory_window" });
+        EventManager.Instance.Invoke(new UIEvents.CloseWindow() { Name = "player_gui" });
+
+        SceneManager.LoadScene(0);
     }
 }

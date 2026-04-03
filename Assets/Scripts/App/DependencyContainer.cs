@@ -1,4 +1,5 @@
 using Scripts.App;
+using Scripts.Game.Items;
 using UnityEngine;
 
 public class DependencyContainer : MonoBehaviour
@@ -8,6 +9,9 @@ public class DependencyContainer : MonoBehaviour
     [SerializeField] private AudioManager _audioMaster;
     [SerializeField] private GameTime _gameTime;
     [SerializeField] private InputHandler _inputHandler;
+    [SerializeField] private ItemsLibrary _itemsLibrary;
+
+    private Inventory _playerInventory;
 
     public static ClientSettings ClientSettings
     {
@@ -49,6 +53,22 @@ public class DependencyContainer : MonoBehaviour
         }
     }
 
+    public static ItemsLibrary ItemsLibrary
+    {
+        get
+        {
+            return Instance._itemsLibrary;
+        }
+    }
+
+    public static Inventory Inventory
+    {
+        get
+        {
+            return Instance._playerInventory;
+        }
+    }
+
     private static DependencyContainer s_instance;
     public static DependencyContainer Instance
     {
@@ -71,6 +91,12 @@ public class DependencyContainer : MonoBehaviour
     {
         _gameTime = new();
 
-        _inputHandler.Initialize(); 
+        _inputHandler.Initialize();
+        _itemsLibrary.Initialize();
+    }
+
+    public void SetInventory(Inventory inventory)
+    {
+        _playerInventory = inventory;
     }
 }

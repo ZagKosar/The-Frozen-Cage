@@ -22,11 +22,11 @@ public class MainMenuWindow : WindowPanel
 
     public override void Open()
     {
-        gameObject.SetActive(true);
-
         _startNewGameButton.onClick.AddListener(StartNewGame);
         _settingsButton.onClick.AddListener(OpenSettings);
         _quitGameButton.onClick.AddListener(OnQuit);
+
+        gameObject.SetActive(true);
     }
 
     public override void Close()
@@ -40,6 +40,7 @@ public class MainMenuWindow : WindowPanel
 
     private void StartNewGame()
     {
+        EventManager.Instance.Invoke(new UIEvents.CloseWindow() { Name = "main_menu_panel" });
         EventManager.Instance.Invoke(new UIEvents.StartNewGame());
     }
 

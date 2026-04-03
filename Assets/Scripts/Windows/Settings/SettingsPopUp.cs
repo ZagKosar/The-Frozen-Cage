@@ -69,8 +69,6 @@ public class SettingsPopUp : WindowPanel
 
     public override void Open()
     {
-        gameObject.SetActive(true);
-
         _mouseSensitivitySlider.onValueChanged.AddListener(OnMouseSensitivityChanged);
         _textSpeedSlider.onValueChanged.AddListener(OnTextSpeedChanged);
         _subtitlesSwitcher.Switch += OnSubtitlesChanged;
@@ -91,6 +89,8 @@ public class SettingsPopUp : WindowPanel
         LoadSettings();
 
         _lastClientSettings = DependencyContainer.ClientSettings.Clone();
+
+        gameObject.SetActive(true);
     }
 
     public override void Close()
