@@ -4,8 +4,6 @@ using Scripts.WindowSwitcher;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 
@@ -20,21 +18,19 @@ namespace Scripts.Windows.Inventory
 
         private List<InventoryItem> _items;
         private int _currentIndex = 0;
+        private bool _isPlaying = false;
 
         public override void Load()
         {
-
         }
 
         public override void Destroy()
         {
-            
         }
 
-        public override void Open()
+        public override void Open(object context = null)
         {
             _items = DependencyContainer.Inventory.Items.ToList();
-
             _currentIndex = 0;
 
             var inputHandler = DependencyContainer.InputHandler;
@@ -44,32 +40,55 @@ namespace Scripts.Windows.Inventory
 
             _previewImage.Drag += OnDrag;
 
-            if (_items.Count > 0)
-            {
-                var itemsLibrary = DependencyContainer.ItemsLibrary;
-                var currentItem = _items[_currentIndex];
-                
-                if (itemsLibrary.TryGetItem(currentItem.Id, out var item))
-                {
-                    _nameTMP.text = item.Name;
-                    _descriptionTMP.text = item.Description;
-
-                    EventManager.Instance.Invoke(new PreviewEvent.Show() { Model = item.Model });
-                }
-            }
+            ShowCurrentItem();
 
             gameObject.SetActive(true);
         }
 
         public override void Close()
         {
+            var inputHandler = DependencyContainer.InputHandler;
+
+            if (inputHandler != null)
+            {
+                inputHandler.OnNext -= OnNext;
+                inputHandler.OnPrevious -= OnPrevious;
+            }
+
+            _previewImage.Drag -= OnDrag;
+
             gameObject.SetActive(false);
+        }
+
+        private void ShowCurrentItem()
+        {
+            if (_items.Count == 0)
+            {
+                _nameTMP.text = "";
+                _descriptionTMP.text = "";
+                return;
+            }
+
+            var itemsLibrary = DependencyContainer.ItemsLibrary;
+            var currentItem = _items[_currentIndex];
+
+            if (itemsLibrary.TryGetItem(currentItem.Id, out var item))
+            {
+                _nameTMP.text = item.Name;
+                _descriptionTMP.text = item.Description;
+
+                EventManager.Instance.Invoke(new PreviewEvent.Show() { Model = item.Model });
+            }
         }
 
         private void OnNext()
         {
-            if (_items.Count == 0 || _items.Count == 1)
+            if (_isPlaying)
                 return;
+
+            if (_items.Count <= 1)
+                return;
+
             _currentIndex = (_currentIndex + 1) % _items.Count;
 
             var itemsLibrary = DependencyContainer.ItemsLibrary;
@@ -82,15 +101,21 @@ namespace Scripts.Windows.Inventory
 
                 EventManager.Instance.Invoke(new PreviewEvent.ShowNext() { NextModel = item.Model });
             }
+            _isPlaying = true;
+            Invoke(nameof(StopPlaying), 0.5f);
         }
 
         private void OnPrevious()
         {
-            if (_items.Count == 0 || _items.Count == 1)
+            if (_isPlaying)
                 return;
+
+            if (_items.Count <= 1)
+                return;
+
             _currentIndex--;
 
-            if (_currentIndex == -1)
+            if (_currentIndex < 0)
                 _currentIndex = _items.Count - 1;
 
             var itemsLibrary = DependencyContainer.ItemsLibrary;
@@ -103,11 +128,19 @@ namespace Scripts.Windows.Inventory
 
                 EventManager.Instance.Invoke(new PreviewEvent.ShowPrevious() { PreviousModel = item.Model });
             }
+
+            _isPlaying = true;
+            Invoke(nameof(StopPlaying), 0.5f);
         }
 
         private void OnDrag(Vector2 delta)
         {
             EventManager.Instance.Invoke(new PreviewEvent.Drag() { Delta = delta });
+        }
+
+        private void StopPlaying()
+        {
+            _isPlaying = false;
         }
     }
 }

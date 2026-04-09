@@ -36,9 +36,8 @@ namespace Scripts.WindowSwitcher
                 _windowsPrefabsDictionary[window.Name] = window.Panel;
         }
 
-        public void ShowWindow(string name, bool closePrevious = false)
+        public void ShowWindow(string name, bool closePrevious = false, object context = null)
         {
-
             if (!_windowsDictionary.TryGetValue(name, out var window))
             {
                 window = Instantiate(_windowsPrefabsDictionary[name], _container);
@@ -57,7 +56,7 @@ namespace Scripts.WindowSwitcher
             }
 
             _windowsStack.Push(window);
-            window.Open();
+            window.Open(context);
         }
 
         public void CloseWindow(string name)

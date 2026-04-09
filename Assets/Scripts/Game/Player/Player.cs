@@ -1,8 +1,16 @@
 using UnityEngine;
 
-public class Player : MonoBehaviour
+namespace Scripts.Game
 {
-    [SerializeField] private Inventory _inventory;
+    public class Player : MonoBehaviour
+    {
+        [SerializeField] private Inventory _inventory;
 
-    public Inventory Inventory => _inventory;
+        public Inventory Inventory => _inventory;
+
+        public void SetInventory(Inventory inventory)
+        {
+            _inventory = inventory;
+        }
+    }
 }

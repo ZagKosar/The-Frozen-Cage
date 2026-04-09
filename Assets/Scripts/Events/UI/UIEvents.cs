@@ -7,6 +7,13 @@ public class UIEvents
         public string Name;
     }
 
+    public struct OpenWindowWithContext
+    {
+        public string Name;
+        public object Context;
+    }
+
+
     public struct CloseWindow
     {
         public string Name;

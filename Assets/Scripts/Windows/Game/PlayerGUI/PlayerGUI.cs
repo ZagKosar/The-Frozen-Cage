@@ -11,7 +11,7 @@ public class PlayerGUI : WindowPanel
     [SerializeField] private Sprite _hoverCrosshair;
     [SerializeField] private TMP_Text _interactionDescription;
 
-    public override void Open()
+    public override void Open(object context = null)
     {
         EventManager.Instance.Subscribe<GameEvent.InteractHover>(OnItemHover);
         EventManager.Instance.Subscribe<GameEvent.InteractHoverEnd>(OnItemHoverEnd);

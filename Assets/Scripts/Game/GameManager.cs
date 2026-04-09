@@ -1,10 +1,6 @@
 ﻿using Scripts.App;
 using Scripts.Events.Game;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 
 namespace Scripts.Game
@@ -26,8 +22,9 @@ namespace Scripts.Game
             inputHandler.OnInventory += OnInventory;
             inputHandler.OnInteract += OnInteract;
 
-            EventManager.Instance.Subscribe<GameEvent.Pause>(OnPause);
+            EventManager.Instance.Subscribe<GameEvent.Pause>(OnPauseEvent);
             EventManager.Instance.Subscribe<GameEvent.InteractHover>(OnInteractHover);
+            EventManager.Instance.Subscribe<GameEvent.InteractHoverEnd>(OnInteractHoverEnd);
             EventManager.Instance.Subscribe<GameEvent.AddItem>(OnAddItem);
 
             DependencyContainer.Instance.SetInventory(_player.Inventory);
@@ -80,11 +77,11 @@ namespace Scripts.Game
         {
             if (_currentInteractable == null)
                 return;
-            
+
             _currentInteractable.Interact();
         }
 
-        private void OnPause(GameEvent.Pause data)
+        private void OnPauseEvent(GameEvent.Pause data)
         {
             OnPause();
         }
@@ -94,9 +91,30 @@ namespace Scripts.Game
             _currentInteractable = data.Interact;
         }
 
+        private void OnInteractHoverEnd(GameEvent.InteractHoverEnd data)
+        {
+            _currentInteractable = null;
+        }
+
         private void OnAddItem(GameEvent.AddItem data)
         {
             _player.Inventory.AddItem(data.Id, data.Amount);
+        }
+
+        private void OnDestroy()
+        {
+            var inputHandler = DependencyContainer.InputHandler;
+            if (inputHandler != null)
+            {
+                inputHandler.OnPause -= OnPause;
+                inputHandler.OnInventory -= OnInventory;
+                inputHandler.OnInteract -= OnInteract;
+            }
+
+            EventManager.Instance.Unsubscribe<GameEvent.Pause>(OnPauseEvent);
+            EventManager.Instance.Unsubscribe<GameEvent.InteractHover>(OnInteractHover);
+            EventManager.Instance.Unsubscribe<GameEvent.InteractHoverEnd>(OnInteractHoverEnd);
+            EventManager.Instance.Unsubscribe<GameEvent.AddItem>(OnAddItem);
         }
     }
 }

@@ -67,7 +67,7 @@ public class SettingsPopUp : WindowPanel
 
     }
 
-    public override void Open()
+    public override void Open(object context = null)
     {
         _mouseSensitivitySlider.onValueChanged.AddListener(OnMouseSensitivityChanged);
         _textSpeedSlider.onValueChanged.AddListener(OnTextSpeedChanged);

@@ -1,3 +1,5 @@
+using Scripts.Events.App;
+using Scripts.Windows.Save;
 using Scripts.WindowSwitcher;
 using System;
 using Unity.VisualScripting;
@@ -7,12 +9,13 @@ using UnityEngine.UI;
 public class MainMenuWindow : WindowPanel
 {
     [SerializeField] private Button _startNewGameButton;
+    [SerializeField] private Button _continueGameButton;
     [SerializeField] private Button _settingsButton;
     [SerializeField] private Button _quitGameButton;
 
     public override void Load()
     {
-
+        
     }
 
     public override void Destroy()
@@ -20,9 +23,10 @@ public class MainMenuWindow : WindowPanel
 
     }
 
-    public override void Open()
+    public override void Open(object context = null)
     {
         _startNewGameButton.onClick.AddListener(StartNewGame);
+        _continueGameButton.onClick.AddListener(ContinueGame);
         _settingsButton.onClick.AddListener(OpenSettings);
         _quitGameButton.onClick.AddListener(OnQuit);
 
@@ -32,6 +36,7 @@ public class MainMenuWindow : WindowPanel
     public override void Close()
     {
         _startNewGameButton.onClick.RemoveListener(StartNewGame);
+        _continueGameButton.onClick.RemoveListener(ContinueGame);
         _settingsButton.onClick.RemoveListener(OpenSettings);
         _quitGameButton.onClick.RemoveListener(OnQuit);
 
@@ -42,6 +47,11 @@ public class MainMenuWindow : WindowPanel
     {
         EventManager.Instance.Invoke(new UIEvents.CloseWindow() { Name = "main_menu_panel" });
         EventManager.Instance.Invoke(new UIEvents.StartNewGame());
+    }
+
+    private void ContinueGame()
+    {
+        EventManager.Instance.Invoke(new UIEvents.OpenWindowWithContext() { Name = "save_window", Context = new SaveWindowContext() { IsSaving = false } });
     }
 
     private void OpenSettings()

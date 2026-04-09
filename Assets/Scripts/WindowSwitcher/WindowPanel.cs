@@ -11,7 +11,7 @@ namespace Scripts.WindowSwitcher
     {
         public abstract void Load();
         public abstract void Destroy();
-        public abstract void Open();
+        public abstract void Open(object context = null);
         public abstract void Close();
 
     }

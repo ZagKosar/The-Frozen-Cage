@@ -1,5 +1,6 @@
 using Scripts.Events.Game;
 using Scripts.UI;
+using Scripts.Windows.Save;
 using Scripts.WindowSwitcher;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -15,7 +16,7 @@ public class PauseWindow : WindowPanel
 
     [SerializeField] private YesNoPopup _exitConfirmationPopup;
 
-    public override void Open()
+    public override void Open(object context = null)
     {
         _continueBtn.onClick.AddListener(OnContinue);
         _saveBtn.onClick.AddListener(OnSave);
@@ -56,12 +57,12 @@ public class PauseWindow : WindowPanel
 
     private void OnSave()
     {
-
+        EventManager.Instance.Invoke(new UIEvents.OpenWindowWithContext() { Name = "save_window", Context = new SaveWindowContext() { IsSaving = true } });
     }
 
     private void OnLoad()
     {
-
+        EventManager.Instance.Invoke(new UIEvents.OpenWindowWithContext() { Name = "save_window", Context = new SaveWindowContext() { IsSaving = false } });
     }
 
     private void OnSettings()

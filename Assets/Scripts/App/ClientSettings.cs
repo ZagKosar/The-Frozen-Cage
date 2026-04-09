@@ -26,7 +26,7 @@ public class ClientSettings
     public void Save()
     {
         var savePath = Path.Combine(Application.persistentDataPath, "Settings");
-        var saveFile = Path.Combine(savePath, "Save.json");
+        var saveFile = Path.Combine(savePath, "Settings.json");
 
         if (!Directory.Exists(savePath))
         {
@@ -40,7 +40,7 @@ public class ClientSettings
 
     public void Load()
     {
-        var saveFile = Path.Combine(Application.persistentDataPath, "Settings/Save.json");
+        var saveFile = Path.Combine(Application.persistentDataPath, "Settings/Settings.json");
 
         if (!File.Exists(saveFile))
             return;

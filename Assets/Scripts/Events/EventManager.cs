@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class EventManager
 {
@@ -23,8 +24,13 @@ public class EventManager
     /// </summary>
     /// <typeparam name="T">¬ид событи€</typeparam>
     /// <param name="action"> ƒействие которое срабатывает при получении событи€(звонка) </param>
+
+    private bool _isSceneListening = false;
+
     public void Subscribe<T>(Action<T> action)
     {
+        EnsureSceneListener();
+
         var type = typeof(T);
 
         if (!eventSubscribers.TryGetValue(type,out var subscribers))
@@ -32,6 +38,9 @@ public class EventManager
             subscribers = new List<Delegate>();
             eventSubscribers[type] = subscribers;
         }
+
+        if (subscribers.Contains(action))
+            return;
 
         subscribers.Add(action);
     }
@@ -53,9 +62,53 @@ public class EventManager
         if (!eventSubscribers.TryGetValue(type, out var subscribers))
             return;
 
+        var copy = new List<Delegate>(subscribers);
+
         foreach (var subscriber in subscribers)
         {
-            ((Action<T>)subscriber)?.Invoke(data);
+            try
+            {
+                ((Action<T>)subscriber)?.Invoke(data);
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"[EventManager] Error invoking {type.Name}: {e}");
+            }
         }
+    }
+
+    public void ClearAll()
+    {
+        eventSubscribers.Clear();
+    }
+
+    /// <summary>
+    /// ”дал€ет подписки, чьи целевые объекты были уничтожены
+    /// </summary>
+    public void CleanupDestroyedSubscribers()
+    {
+        foreach (var kvp in eventSubscribers)
+        {
+            kvp.Value.RemoveAll(d =>
+            {
+                if (d.Target is MonoBehaviour mb)
+                    return mb == null; // Unity null check Ч объект уничтожен
+                return false;
+            });
+        }
+    }
+
+    private void EnsureSceneListener()
+    {
+        if (_isSceneListening)
+            return;
+
+        _isSceneListening = true;
+        SceneManager.sceneUnloaded += OnSceneUnloaded;
+    }
+
+    private void OnSceneUnloaded(Scene scene)
+    {
+        CleanupDestroyedSubscribers();
     }
 }
