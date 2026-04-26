@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Scripts.App.Constants;
+using Sirenix.OdinInspector;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -42,6 +44,18 @@ namespace Scripts.WindowSwitcher
             {
                 window = Instantiate(_windowsPrefabsDictionary[name], _container);
                 window.Load();
+
+                var targetIndex = 0;
+
+                for (int i = 0; i < _container.childCount - 1; i++)
+                {
+                    var otherWindow = _container.GetChild(i).GetComponent<WindowPanel>();
+
+                    if (otherWindow != null && window.Priority >= otherWindow.Priority)
+                        targetIndex = i + 1;
+                }
+
+                window.transform.SetSiblingIndex(targetIndex);
 
                 _windowsDictionary[name] = window;
             }
@@ -91,7 +105,10 @@ namespace Scripts.WindowSwitcher
     [Serializable]
     public class Window
     {
+        [ValueDropdown("AllWindows")]
         public string Name;
         public WindowPanel Panel;
+
+        private IReadOnlyList<string> AllWindows => Constants.AllWindows;
     }
 }

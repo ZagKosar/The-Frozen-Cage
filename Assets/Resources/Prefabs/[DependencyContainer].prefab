@@ -62,15 +62,4 @@ MonoBehaviour:
   _graphicsMaster: {fileID: 0}
   _audioMaster: {fileID: 0}
   _inputHandler: {fileID: 0}
-  _itemsLibrary:
-    _items:
-    - _id: 1
-      _name: "\u0424\u043E\u0442\u043E\u0430\u043F\u043F\u0430\u0440\u0430\u0442"
-      _description: "\u0431\u044B\u043B \u0434\u0430 \u0431\u044B\u043B"
-      _model: {fileID: -8679921383154817045, guid: 5df910c99edb94c4ca1a02ca3b44afb0, type: 3}
-    - _id: 2
-      _name: "\u0423\u0434\u043E\u0441\u0442\u043E\u0432\u0435\u0440\u0435\u043D\u0438\u0435
-        \u043B\u0438\u0447\u043D\u043E\u0441\u0442\u0438"
-      _description: "\u0421\u043E\u0442\u0440\u0443\u0434\u0438\u0446\u0430 \u0440\u0430\u0431\u043E\u0442\u0430\u0432\u0448\u0430\u044F
-        \u0432 \u0441\u0435\u0442\u0438 \u0437\u0430\u043A\u0443\u0441\u043E\u0447\u043D\u044B\u0445..."
-      _model: {fileID: -8679921383154817045, guid: fb540f900c3fb6645b1b8a029808f781, type: 3}
+  _itemsLibrary: {fileID: 11400000, guid: 455ebb48860ff2d4194e4e16f1c98c93, type: 2}

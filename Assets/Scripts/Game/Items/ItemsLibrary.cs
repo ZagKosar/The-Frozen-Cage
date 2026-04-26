@@ -7,10 +7,12 @@ using UnityEngine;
 
 namespace Scripts.Game.Items
 {
-    [Serializable]
-    public class ItemsLibrary
+    [Serializable, CreateAssetMenu(fileName = "ItemsLibrary", menuName = "Libraries/ItemsLibrary")]
+    public class ItemsLibrary : ScriptableObject
     {
         [SerializeField] private List<Item> _items;
+
+        public IReadOnlyList<Item> Items => _items;
 
         private Dictionary<int, Item> _itemsDictionary = new();
 

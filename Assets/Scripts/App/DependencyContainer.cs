@@ -82,8 +82,6 @@ public class DependencyContainer : MonoBehaviour
 
     private void Awake()
     {
-        DontDestroyOnLoad(this);
-
         s_instance = this;
     }
 

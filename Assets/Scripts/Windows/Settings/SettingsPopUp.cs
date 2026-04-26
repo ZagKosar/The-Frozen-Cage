@@ -57,6 +57,8 @@ public class SettingsPopUp : WindowPanel
 
     private readonly List<ResolutionItem> _resolutions = new();
 
+    public override int Priority => 3;
+
     public override void Load()
     {
         BuildResolutionDropdown();

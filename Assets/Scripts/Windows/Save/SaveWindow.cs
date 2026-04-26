@@ -1,4 +1,5 @@
-﻿using Scripts.Events.App;
+﻿using Scripts.App.Constants;
+using Scripts.Events.App;
 using Scripts.WindowSwitcher;
 using System;
 using System.Collections.Generic;
@@ -19,6 +20,8 @@ namespace Scripts.Windows.Save
 
         private bool _isSaving;
         private List<SaveSlot> _saveSlots = new List<SaveSlot>();
+
+        public override int Priority => 3;
 
         public override void Open(object context = null)
         {
@@ -67,7 +70,7 @@ namespace Scripts.Windows.Save
 
                 SaveSlot slot;
 
-                if (_saveSlots.Count - 1 <= i)
+                if (_saveSlots.Count - 1 < i)
                 {
                     slot = Instantiate(_saveSlotPrefab, _slotsContainer);
                     
@@ -94,7 +97,7 @@ namespace Scripts.Windows.Save
 
                 SaveSlot slot;
 
-                if (_saveSlots.Count - 1 <= nextSlot)
+                if (_saveSlots.Count - 1 < nextSlot)
                 {
                     slot = Instantiate(_saveSlotPrefab, _slotsContainer);
 
@@ -126,7 +129,7 @@ namespace Scripts.Windows.Save
 
         private void OnClose()
         {
-            EventManager.Instance.Invoke(new UIEvents.CloseWindow() { Name = "save_window" });
+            EventManager.Instance.Invoke(new UIEvents.CloseWindow() { Name = Constants.SaveWindow });
         }
 
         private void HideSlots()

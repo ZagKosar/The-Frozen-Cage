@@ -29,5 +29,10 @@ namespace Scripts.Events.Game
             public int Id;
             public int Amount;
         }
+
+        public struct InnerDialogue
+        {
+            public string Text;
+        }
     }
 }

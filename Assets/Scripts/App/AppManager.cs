@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using Scripts.App.Constants;
 using Scripts.Events.App;
 using Scripts.Game.Save;
 using Scripts.WindowSwitcher;
@@ -47,6 +48,8 @@ public class AppManager : MonoBehaviour
         EventManager.Instance.Subscribe<UIEvents.ExitToMainMenu>(ExitToMainMenu);
         EventManager.Instance.Subscribe<AppEvents.Save>(SaveGame);
         EventManager.Instance.Subscribe<AppEvents.Load>(LoadGame);
+
+        LoadScene(1).Forget();
     }
 
     void Update()
@@ -85,7 +88,9 @@ public class AppManager : MonoBehaviour
 
     private void StartNewGame(UIEvents.StartNewGame data)
     {
-        SceneManager.LoadScene(1);
+        EventManager.Instance.Invoke(new UIEvents.OpenWindow() { Name = Constants.LoadingWindow });
+
+        LoadScene(2).ContinueWith(() => EventManager.Instance.Invoke(new UIEvents.CloseWindow() { Name = Constants.LoadingWindow })).Forget();
     }
 
     private void ExitToMainMenu(UIEvents.ExitToMainMenu data)
@@ -93,21 +98,29 @@ public class AppManager : MonoBehaviour
         CloseGameMenu();
         DontDestroyCamera();
 
-        SceneManager.LoadScene(0);
+        EventManager.Instance.Invoke(new UIEvents.OpenWindow() { Name = Constants.LoadingWindow});
+
+        LoadScene(1)
+            .ContinueWith(() =>
+            {
+                EventManager.Instance.Invoke(new UIEvents.CloseWindow() { Name = Constants.LoadingWindow });
+                EventManager.Instance.Invoke(new UIEvents.OpenWindow() { Name = Constants.MainMenuWindow });
+            })
+            .Forget();
     }
 
     private void CloseMainMenu()
     {
-        EventManager.Instance.Invoke(new UIEvents.CloseWindow() { Name = "main_menu_panel" });
-        EventManager.Instance.Invoke(new UIEvents.CloseWindow() { Name = "settings_panel" });
-        EventManager.Instance.Invoke(new UIEvents.CloseWindow() { Name = "save_window" });
+        EventManager.Instance.Invoke(new UIEvents.CloseWindow() { Name = Constants.MainMenuWindow });
+        EventManager.Instance.Invoke(new UIEvents.CloseWindow() { Name = Constants.SettingsPopUp });
+        EventManager.Instance.Invoke(new UIEvents.CloseWindow() { Name = Constants.SaveWindow });
     }
 
     private void CloseGameMenu()
     {
-        EventManager.Instance.Invoke(new UIEvents.CloseWindow() { Name = "pause_window" });
-        EventManager.Instance.Invoke(new UIEvents.CloseWindow() { Name = "inventory_window" });
-        EventManager.Instance.Invoke(new UIEvents.CloseWindow() { Name = "player_gui" });
+        EventManager.Instance.Invoke(new UIEvents.CloseWindow() { Name = Constants.PauseWindow });
+        EventManager.Instance.Invoke(new UIEvents.CloseWindow() { Name = Constants.InventoryWindow });
+        EventManager.Instance.Invoke(new UIEvents.CloseWindow() { Name = Constants.PlayerGUI });
     }
 
     private void DontDestroyCamera()
@@ -127,7 +140,16 @@ public class AppManager : MonoBehaviour
         CloseGameMenu();
         DontDestroyCamera();
 
-        LoadScene(1).ContinueWith(() => LoadSave(data.Slot)).Forget();
+        EventManager.Instance.Invoke(new UIEvents.OpenWindow() { Name = Constants.LoadingWindow });
+
+        LoadScene(2)
+            .ContinueWith(() =>
+            {
+                LoadSave(data.Slot);
+
+                EventManager.Instance.Invoke(new UIEvents.CloseWindow() { Name = Constants.LoadingWindow });
+            })
+            .Forget();
     }
 
     private async UniTask LoadScene(int scene)

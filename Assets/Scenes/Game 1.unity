@@ -7942,6 +7942,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6f1675e8a5b6b154d89878884076b2c1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PickableItem
+  _id: 0
+  _amount: 0
+  _interactDescription: 
 --- !u!65 &442155990
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -12791,6 +12794,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Scripts.Game.GameManager
   _cameraController: {fileID: 295969756}
+  _player: {fileID: 0}
 --- !u!4 &732514787
 Transform:
   m_ObjectHideFlags: 0
@@ -19557,8 +19561,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d301c365228da4945b775cbe32b39522, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Scripts.Game.Preview.PreviewShower
-  _currentModel: {fileID: 0}
-  _tempModel: {fileID: 0}
+  _container: {fileID: 0}
   _rotationSpeed: 10
   _swipeOffset: 15
   _swipeDuration: 0.5

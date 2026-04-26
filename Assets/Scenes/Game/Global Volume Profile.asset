@@ -13,7 +13,35 @@ MonoBehaviour:
   m_Name: Global Volume Profile
   m_EditorClassIdentifier: Unity.RenderPipelines.Core.Runtime::UnityEngine.Rendering.VolumeProfile
   components:
-  - {fileID: 5178023198203270709}
+  - {fileID: 3844571883836931086}
+--- !u!114 &3844571883836931086
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2c90b3509610a984da06c07066918bec, type: 3}
+  m_Name: PSXVolumeComponent
+  m_EditorClassIdentifier: Assembly-CSharp::PSXVolumeComponent
+  active: 1
+  pixelation:
+    m_OverrideState: 1
+    m_Value: 4
+  colorDepth:
+    m_OverrideState: 1
+    m_Value: 255
+  noiseIntensity:
+    m_OverrideState: 1
+    m_Value: 0.15
+  vignetteIntensity:
+    m_OverrideState: 1
+    m_Value: 1
+  fisheyeStrength:
+    m_OverrideState: 1
+    m_Value: 0
 --- !u!114 &4484669440085068214
 MonoBehaviour:
   m_ObjectHideFlags: 3

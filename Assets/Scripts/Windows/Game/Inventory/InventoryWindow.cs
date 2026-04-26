@@ -20,6 +20,8 @@ namespace Scripts.Windows.Inventory
         private int _currentIndex = 0;
         private bool _isPlaying = false;
 
+        public override int Priority => 2;
+
         public override void Load()
         {
         }

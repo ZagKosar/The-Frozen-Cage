@@ -1,3 +1,4 @@
+using Scripts.App.Constants;
 using Scripts.Events.App;
 using Scripts.Windows.Save;
 using Scripts.WindowSwitcher;
@@ -12,6 +13,8 @@ public class MainMenuWindow : WindowPanel
     [SerializeField] private Button _continueGameButton;
     [SerializeField] private Button _settingsButton;
     [SerializeField] private Button _quitGameButton;
+
+    public override int Priority => 1;
 
     public override void Load()
     {
@@ -45,18 +48,18 @@ public class MainMenuWindow : WindowPanel
 
     private void StartNewGame()
     {
-        EventManager.Instance.Invoke(new UIEvents.CloseWindow() { Name = "main_menu_panel" });
+        EventManager.Instance.Invoke(new UIEvents.CloseWindow() { Name = Constants.MainMenuWindow });
         EventManager.Instance.Invoke(new UIEvents.StartNewGame());
     }
 
     private void ContinueGame()
     {
-        EventManager.Instance.Invoke(new UIEvents.OpenWindowWithContext() { Name = "save_window", Context = new SaveWindowContext() { IsSaving = false } });
+        EventManager.Instance.Invoke(new UIEvents.OpenWindowWithContext() { Name = Constants.SaveWindow, Context = new SaveWindowContext() { IsSaving = false } });
     }
 
     private void OpenSettings()
     {
-        EventManager.Instance.Invoke(new UIEvents.OpenWindow() { Name = "settings_panel" });
+        EventManager.Instance.Invoke(new UIEvents.OpenWindow() { Name = Constants.SettingsPopUp });
     }
 
     private void OnQuit()

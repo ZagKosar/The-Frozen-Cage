@@ -18,7 +18,7 @@ MonoBehaviour:
     - name: Tree1
       settings:
         brushRadius: 0.01
-        brushSpacing: 2.82
+        brushSpacing: 3.66
         brushOverlapCheckMode: 0
         brushOverlapDistance: 2
         brushOverlapCheckObjects: 1
@@ -352,7 +352,7 @@ MonoBehaviour:
   pinSnapScale: 0
   placeAngleStep: 15
   placeScaleStep: 0.1
-  eraseBrushRadius: 20
+  eraseBrushRadius: 8.5
   eraseByLayer: 1
   eraseLayers:
     serializedVersion: 2

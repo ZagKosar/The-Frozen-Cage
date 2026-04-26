@@ -1,4 +1,5 @@
 ﻿using Scripts.App;
+using Scripts.App.Constants;
 using Scripts.Events.Game;
 using System;
 using UnityEngine;
@@ -33,7 +34,7 @@ namespace Scripts.Game
 
             _cameraController.SetMouseLock(true);
 
-            EventManager.Instance.Invoke(new UIEvents.OpenWindow() { Name = "player_gui" });
+            EventManager.Instance.Invoke(new UIEvents.OpenWindow() { Name = Constants.PlayerGUI });
         }
 
         private void Update()
@@ -53,9 +54,9 @@ namespace Scripts.Game
             _cameraController.SetMouseLock(!_isPaused);
 
             if (_isPaused)
-                EventManager.Instance.Invoke(new UIEvents.OpenWindow() { Name = "pause_window" });
+                EventManager.Instance.Invoke(new UIEvents.OpenWindow() { Name = Constants.PauseWindow });
             else
-                EventManager.Instance.Invoke(new UIEvents.CloseWindow() { Name = "pause_window" });
+                EventManager.Instance.Invoke(new UIEvents.CloseWindow() { Name = Constants.PauseWindow });
         }
 
         private void OnInventory()
@@ -68,9 +69,9 @@ namespace Scripts.Game
             _cameraController.SetMouseLock(!_isPaused);
 
             if (_isPaused)
-                EventManager.Instance.Invoke(new UIEvents.OpenWindow() { Name = "inventory_window" });
+                EventManager.Instance.Invoke(new UIEvents.OpenWindow() { Name = Constants.InventoryWindow });
             else
-                EventManager.Instance.Invoke(new UIEvents.CloseWindow() { Name = "inventory_window" });
+                EventManager.Instance.Invoke(new UIEvents.CloseWindow() { Name = Constants.InventoryWindow });
         }
 
         private void OnInteract()

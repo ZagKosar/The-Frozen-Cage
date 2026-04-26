@@ -1,3 +1,4 @@
+using Scripts.App.Constants;
 using Scripts.Events.Game;
 using Scripts.UI;
 using Scripts.Windows.Save;
@@ -15,6 +16,8 @@ public class PauseWindow : WindowPanel
     [SerializeField] private Button _exitBtn;
 
     [SerializeField] private YesNoPopup _exitConfirmationPopup;
+
+    public override int Priority => 2;
 
     public override void Open(object context = null)
     {
@@ -57,17 +60,17 @@ public class PauseWindow : WindowPanel
 
     private void OnSave()
     {
-        EventManager.Instance.Invoke(new UIEvents.OpenWindowWithContext() { Name = "save_window", Context = new SaveWindowContext() { IsSaving = true } });
+        EventManager.Instance.Invoke(new UIEvents.OpenWindowWithContext() { Name = Constants.SaveWindow, Context = new SaveWindowContext() { IsSaving = true } });
     }
 
     private void OnLoad()
     {
-        EventManager.Instance.Invoke(new UIEvents.OpenWindowWithContext() { Name = "save_window", Context = new SaveWindowContext() { IsSaving = false } });
+        EventManager.Instance.Invoke(new UIEvents.OpenWindowWithContext() { Name = Constants.SaveWindow, Context = new SaveWindowContext() { IsSaving = false } });
     }
 
     private void OnSettings()
     {
-        EventManager.Instance.Invoke(new UIEvents.OpenWindow() { Name = "settings_panel" });
+        EventManager.Instance.Invoke(new UIEvents.OpenWindow() { Name = Constants.SettingsPopUp });
     }
 
     private void OnExit()
