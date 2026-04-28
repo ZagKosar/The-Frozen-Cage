@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,7 +11,7 @@ namespace Scripts.Game.Triggers.Conditions
     [Serializable]
     public class ItemPickedUp : ICondition
     {
-        [SerializeField] private PickableItem _target;
+        [SerializeField, JsonIgnore] private PickableItem _target;
 
         public event Action Complete;
 

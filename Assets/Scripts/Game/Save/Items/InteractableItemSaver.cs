@@ -11,7 +11,7 @@ namespace Scripts.Game.Save.Items
     public class InteractableItemSaver : BaseSaver
     {
         [SerializeField] private Interactable _item;
-        [SerializeField] private int _uniqId;
+        [SerializeField] private string _uniqId = Guid.NewGuid().ToString();
 
         public override string Key => "InteractableItem_" + _uniqId;
 

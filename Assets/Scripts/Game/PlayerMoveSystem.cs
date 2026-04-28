@@ -42,6 +42,10 @@ namespace Scripts.Game
 
         private void Start()
         {
+#if UNITY_EDITOR
+            _sprintSpeed = 25;
+#endif
+
             _gameTime = DependencyContainer.GameTime;
 
             var inputHandler = DependencyContainer.InputHandler;

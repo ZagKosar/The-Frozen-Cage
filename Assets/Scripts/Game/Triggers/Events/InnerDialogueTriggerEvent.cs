@@ -1,4 +1,5 @@
-﻿using Scripts.Events.Game;
+﻿using Newtonsoft.Json;
+using Scripts.Events.Game;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,7 +12,7 @@ namespace Scripts.Game.Triggers.Events
     [Serializable]
     public class InnerDialogueTriggerEvent : ITriggerEvent
     {
-        [SerializeField] private string _text;
+        [SerializeField, JsonIgnore] private string _text;
 
         public void Run()
         {

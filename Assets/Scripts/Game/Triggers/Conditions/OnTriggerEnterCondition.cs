@@ -1,4 +1,5 @@
-﻿using Sirenix.OdinInspector;
+﻿using Newtonsoft.Json;
+using Sirenix.OdinInspector;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,8 +12,8 @@ namespace Scripts.Game.Triggers.Conditions
     [Serializable]
     public class OnTriggerEnterCondition : ICondition
     {
-        [SerializeField] private ColliderDetector _detector;
-        [SerializeField] private string _tag;
+        [SerializeField, JsonIgnore] private ColliderDetector _detector;
+        [SerializeField, JsonIgnore] private string _tag;
         
         public event Action Complete;
 
