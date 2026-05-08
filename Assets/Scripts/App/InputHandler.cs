@@ -21,6 +21,7 @@ namespace Scripts.App
         public event Action OnCrouchStop;
         public event Action OnSprintStart;
         public event Action OnSprintStop;
+        public event Action OnFlashlight;
 
         // UI
         public event Action OnSubmit;
@@ -55,6 +56,8 @@ namespace Scripts.App
             _actionAsset.Player.Look.performed += callback => OnLook?.Invoke(callback.ReadValue<Vector2>());
 
             _actionAsset.Player.Interact.performed += _ => OnInteract?.Invoke();
+
+            _actionAsset.Player.Flashlight.performed += _ => OnFlashlight?.Invoke();
 
             _actionAsset.Player.Crouch.started += _ => OnCrouchStart?.Invoke();
             _actionAsset.Player.Crouch.canceled += _ => OnCrouchStop?.Invoke();

@@ -2,6 +2,7 @@ using Scripts.App;
 using Scripts.Events.Game;
 using Scripts.Game;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class CameraController : MonoBehaviour
 {
@@ -43,13 +44,12 @@ public class CameraController : MonoBehaviour
     void Update()
     {
         CheckInteractableHover();
-
         UpdateCameraHeight();
     }
 
     private void WireCameraToPlayer()
     {
-        _camera.transform.parent = _body;
+        _camera.transform.SetParent(_body);
         _camera.transform.localPosition = Vector3.zero;
     }
 
@@ -57,6 +57,7 @@ public class CameraController : MonoBehaviour
     {
         var ray = _camera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
         var isHit = Physics.Raycast(ray, out var hit, _interactionDistance, _interactionsLayers);
+
         if (isHit && hit.collider.CompareTag("Interactable"))
         {
             var interactable = hit.collider.GetComponent<Interactable>();

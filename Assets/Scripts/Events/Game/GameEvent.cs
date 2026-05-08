@@ -34,5 +34,10 @@ namespace Scripts.Events.Game
         {
             public string Text;
         }
+
+        public struct LoadNextScene
+        {
+            
+        }
     }
 }

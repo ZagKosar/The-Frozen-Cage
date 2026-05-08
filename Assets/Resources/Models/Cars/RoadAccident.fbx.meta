@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 1e2c4c3ab093e454897c5562022ecda8
+guid: 00b17b4f57bb4794da8c7fe170f8ceea
 ModelImporter:
   serializedVersion: 24200
   internalIDToNameTable: []
@@ -7,8 +7,18 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: Material.001
-    second: {fileID: 2100000, guid: 14bda66d8b263e148a8721688d781df8, type: 2}
+      name: Material.002
+    second: {fileID: 2100000, guid: 711585dab05e4184bb4ee705df915ccd, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Material.008
+    second: {fileID: 2100000, guid: 711585dab05e4184bb4ee705df915ccd, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: car004a_01
+    second: {fileID: 2100000, guid: 72f0cc246bfab0e46b8bcd1fe596c736, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0

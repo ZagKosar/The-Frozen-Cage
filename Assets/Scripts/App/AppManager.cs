@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using Scripts.App.Constants;
 using Scripts.Events.App;
+using Scripts.Events.Game;
 using Scripts.Game.Save;
 using Scripts.WindowSwitcher;
 using Unity.VectorGraphics;
@@ -37,7 +38,7 @@ public class AppManager : MonoBehaviour
 
         audioMaster.PlaySound("MainMenu");
 
-        OpenWindow(new UIEvents.OpenWindow() { Name = "main_menu_panel" });
+        OpenWindow(new UIEvents.OpenWindow() { Name = Constants.MainMenuWindow });
 
         EventManager.Instance.Subscribe<UIEvents.OpenWindow>(OpenWindow);
         EventManager.Instance.Subscribe<UIEvents.OpenWindowWithContext>(OpenWindowWithContext);
@@ -48,6 +49,7 @@ public class AppManager : MonoBehaviour
         EventManager.Instance.Subscribe<UIEvents.ExitToMainMenu>(ExitToMainMenu);
         EventManager.Instance.Subscribe<AppEvents.Save>(SaveGame);
         EventManager.Instance.Subscribe<AppEvents.Load>(LoadGame);
+        EventManager.Instance.Subscribe<GameEvent.LoadNextScene>(LoadNextGameScene);
 
         LoadScene(1).Forget();
     }
@@ -89,6 +91,8 @@ public class AppManager : MonoBehaviour
     private void StartNewGame(UIEvents.StartNewGame data)
     {
         EventManager.Instance.Invoke(new UIEvents.OpenWindow() { Name = Constants.LoadingWindow });
+
+        DependencyContainer.Inventory = new();
 
         LoadScene(2).ContinueWith(() => EventManager.Instance.Invoke(new UIEvents.CloseWindow() { Name = Constants.LoadingWindow })).Forget();
     }
@@ -152,8 +156,21 @@ public class AppManager : MonoBehaviour
             .Forget();
     }
 
+    private void LoadNextGameScene(GameEvent.LoadNextScene data)
+    {
+        DontDestroyCamera();
+
+        LoadScene(SceneManager.GetActiveScene().buildIndex + 1).Forget();
+    }
+
     private async UniTask LoadScene(int scene)
     {
+        if (SceneManager.sceneCount >= scene)
+        {
+            Debug.LogError($"—цена с индексом {scene} не найдена");
+            return;
+        }
+
         await SceneManager.LoadSceneAsync(scene);
     }
 

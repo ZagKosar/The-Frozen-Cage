@@ -11,7 +11,7 @@ public class DependencyContainer : MonoBehaviour
     [SerializeField] private InputHandler _inputHandler;
     [SerializeField] private ItemsLibrary _itemsLibrary;
 
-    private Inventory _playerInventory;
+    private Inventory _playerInventory = new();
 
     public static ClientSettings ClientSettings
     {
@@ -67,6 +67,13 @@ public class DependencyContainer : MonoBehaviour
         {
             return Instance._playerInventory;
         }
+        set
+        {
+            if (value == null)
+                return;
+
+            Instance._playerInventory = value;
+        }
     }
 
     private static DependencyContainer s_instance;
@@ -91,10 +98,5 @@ public class DependencyContainer : MonoBehaviour
 
         _inputHandler.Initialize();
         _itemsLibrary.Initialize();
-    }
-
-    public void SetInventory(Inventory inventory)
-    {
-        _playerInventory = inventory;
     }
 }

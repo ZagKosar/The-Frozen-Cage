@@ -28,7 +28,7 @@ namespace Scripts.Game
             EventManager.Instance.Subscribe<GameEvent.InteractHoverEnd>(OnInteractHoverEnd);
             EventManager.Instance.Subscribe<GameEvent.AddItem>(OnAddItem);
 
-            DependencyContainer.Instance.SetInventory(_player.Inventory);
+            _player.SetInventory(DependencyContainer.Inventory);
 
             _gameTime = DependencyContainer.GameTime;
 
