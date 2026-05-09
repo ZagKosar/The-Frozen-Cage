@@ -1,10 +1,12 @@
 using Scripts.App;
+using Scripts.Game.Dialog;
 using Scripts.Game.Items;
 using UnityEngine;
 
 public class DependencyContainer : MonoBehaviour
 {
     [SerializeField] private ClientSettings _clientSettings = new();
+    [SerializeField] private DialogSystem _dialogSystem = new();
     [SerializeField] private GraphicsManager _graphicsMaster;
     [SerializeField] private AudioManager _audioMaster;
     [SerializeField] private GameTime _gameTime;
@@ -13,11 +15,31 @@ public class DependencyContainer : MonoBehaviour
 
     private Inventory _playerInventory = new();
 
+    private static DependencyContainer s_instance;
+
+    public static DependencyContainer Instance
+    {
+        get
+        {
+            s_instance ??= FindFirstObjectByType<DependencyContainer>();
+
+            return s_instance;
+        }
+    }
+
     public static ClientSettings ClientSettings
     {
         get
         {
             return Instance._clientSettings;
+        }
+    }
+
+    public static DialogSystem DialogSystem
+    {
+        get
+        {
+            return Instance._dialogSystem;
         }
     }
 
@@ -76,17 +98,6 @@ public class DependencyContainer : MonoBehaviour
         }
     }
 
-    private static DependencyContainer s_instance;
-    public static DependencyContainer Instance
-    {
-        get
-        {
-            s_instance ??= FindFirstObjectByType<DependencyContainer>();
-            
-            return s_instance;
-        }
-    }
-
     private void Awake()
     {
         s_instance = this;
@@ -96,6 +107,7 @@ public class DependencyContainer : MonoBehaviour
     {
         _gameTime = new();
 
+        _dialogSystem.Initialize();
         _inputHandler.Initialize();
         _itemsLibrary.Initialize();
     }

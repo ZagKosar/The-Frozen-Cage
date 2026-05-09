@@ -1,8 +1,10 @@
 ﻿using Scripts.App;
 using Scripts.App.Constants;
 using Scripts.Events.Game;
+using Scripts.Windows.Dialog;
 using System;
 using UnityEngine;
+using static Scripts.Events.Game.DialogEvent;
 
 namespace Scripts.Game
 {
@@ -27,6 +29,7 @@ namespace Scripts.Game
             EventManager.Instance.Subscribe<GameEvent.InteractHover>(OnInteractHover);
             EventManager.Instance.Subscribe<GameEvent.InteractHoverEnd>(OnInteractHoverEnd);
             EventManager.Instance.Subscribe<GameEvent.AddItem>(OnAddItem);
+            EventManager.Instance.Subscribe<DialogEvent.OpenDialog>(OnOpenDialog);
 
             _player.SetInventory(DependencyContainer.Inventory);
 
@@ -102,6 +105,11 @@ namespace Scripts.Game
             _player.Inventory.AddItem(data.Id, data.Amount);
         }
 
+        private void OnOpenDialog(DialogEvent.OpenDialog data)
+        {
+            EventManager.Instance.Invoke(new UIEvents.OpenWindowWithContext { Name = Constants.DialogWindow, Context = new DialogWindowContext() { NodeID = data.NodeID } });
+        }
+
         private void OnDestroy()
         {
             var inputHandler = DependencyContainer.InputHandler;
@@ -116,6 +124,7 @@ namespace Scripts.Game
             EventManager.Instance.Unsubscribe<GameEvent.InteractHover>(OnInteractHover);
             EventManager.Instance.Unsubscribe<GameEvent.InteractHoverEnd>(OnInteractHoverEnd);
             EventManager.Instance.Unsubscribe<GameEvent.AddItem>(OnAddItem);
+            EventManager.Instance.Unsubscribe<DialogEvent.OpenDialog>(OnOpenDialog);
         }
     }
 }

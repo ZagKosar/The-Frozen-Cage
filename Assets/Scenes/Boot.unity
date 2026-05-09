@@ -595,6 +595,8 @@ MonoBehaviour:
     Panel: {fileID: 6901516535479392768, guid: 9c7b4b1b2aa29224a86ffb465a87a4f7, type: 3}
   - Name: loading_window
     Panel: {fileID: 8291118770728443730, guid: fc612912b17b9a145a869b531ecdc29e, type: 3}
+  - Name: dialog_window
+    Panel: {fileID: 7543203745297932615, guid: f31e2235ec6a8eb41867470c0fc8d404, type: 3}
   _container: {fileID: 1060433416}
   _eventSystem: {fileID: 446251534}
 --- !u!4 &897877754
