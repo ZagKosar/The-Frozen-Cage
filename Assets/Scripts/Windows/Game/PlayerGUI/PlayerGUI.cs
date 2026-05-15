@@ -49,7 +49,7 @@ public class PlayerGUI : WindowPanel
         _crosshair.transform.localScale = Vector3.one * 4;
         _crosshair.sprite = _hoverCrosshair;
 
-        _interactionDescription.text = data.Interact.interactDescription;
+        _interactionDescription.text = data.Interact.InteractDescription;
         _interactionDescription.gameObject.SetActive(true);
     }
 

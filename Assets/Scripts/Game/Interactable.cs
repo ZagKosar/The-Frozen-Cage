@@ -9,7 +9,7 @@ namespace Scripts.Game
 {
     public abstract class Interactable : MonoBehaviour
     {
-        public abstract string interactDescription { get; }
+        public abstract string InteractDescription { get; }
 
         public abstract void Interact();
     }

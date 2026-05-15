@@ -25,8 +25,9 @@ namespace Scripts.Game.Triggers
                 {
                     trigger.Enable();
                 }
-
-                trigger.CanRun += RunTrigger;
+                
+                if (trigger.CanRun is null)
+                    trigger.CanRun += RunTrigger;
             }
         }
 

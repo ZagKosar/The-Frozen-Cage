@@ -63,6 +63,7 @@ MonoBehaviour:
     _nodes:
     - {fileID: 11400000, guid: 3c705fc546582a4499feb43c277743cb, type: 2}
     - {fileID: 11400000, guid: 043de90b494651f4481acad33857d152, type: 2}
+    - {fileID: 11400000, guid: bd11be419d737944bba00aa6e8c45145, type: 2}
   _graphicsMaster: {fileID: 0}
   _audioMaster: {fileID: 0}
   _inputHandler: {fileID: 0}

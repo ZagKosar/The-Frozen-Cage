@@ -154,7 +154,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 08416601c085edb48bfcf445d68a30b5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Scripts.Windows.Dialog.DialogWindow
-  _text: {fileID: 2719593568381733916}
+  _textTMP: {fileID: 2719593568381733916}
   _container: {fileID: 1026216853733163053}
   _choicePrefab: {fileID: 433499463140908386, guid: db1a96761e656e8448ee35a2e443ac7f, type: 3}
 --- !u!1 &6182696881140300481
@@ -222,7 +222,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: New Text
+  m_text: "\u0422\u0435\u043A\u0441\u0442 NPC"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}

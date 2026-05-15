@@ -24,7 +24,7 @@ namespace Scripts.Game.Triggers
         [JsonIgnore] public bool PlayOnce => _playOnce;
         [JsonIgnore] public bool Enabled => _enabled;
 
-        public event Action<Trigger> CanRun;
+        public Action<Trigger> CanRun;
 
         [JsonProperty] private bool _enabled = false;
         [JsonProperty] private int _conditionCompleteCount = 0;

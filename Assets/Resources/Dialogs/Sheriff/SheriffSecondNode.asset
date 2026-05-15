@@ -15,9 +15,11 @@ MonoBehaviour:
   ID: Sheriff_2
   Text: "\u041A\u0430\u043A \u0434\u0435\u043B\u0430"
   "Dialog\u0421hoice":
-  - ID: SheriffChoice_2.1
+  - ID: SheriffChoice_2.0
     Text: "\u041D\u043E\u0440\u043C"
     NextNodeID: 
-  - ID: SheriffChoice_2.2
+    NextIsStart: 1
+  - ID: SheriffChoice_2.1
     Text: "\u041F\u043E\u043A\u0430"
     NextNodeID: 
+    NextIsStart: 0

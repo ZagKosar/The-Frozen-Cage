@@ -13,7 +13,7 @@ namespace Scripts.Windows.Dialog
 {
     public class DialogWindow : WindowPanel
     {
-        [SerializeField] private TMP_Text _text;
+        [SerializeField] private TMP_Text _textTMP;
         [SerializeField] private Transform _container;
         [SerializeField] private DialogWindowChoice _choicePrefab;
         
@@ -32,11 +32,13 @@ namespace Scripts.Windows.Dialog
                 throw new Exception($"Нода с id-{dialogWindowContext.NodeID} не найдена");
 
             UpdateWindow(node);
+
+            gameObject.SetActive(true);
         }
 
         public override void Close()
         {
-            
+            gameObject.SetActive(false);
         }
 
         public override void Load()
@@ -51,6 +53,8 @@ namespace Scripts.Windows.Dialog
 
         private void UpdateWindow(DialogNode node)
         {
+            _textTMP.text = node.Text;
+
             for (var i = 0; i < node.DialogСhoice.Count; i++)
             {
                 var choice = GetChoice(i);
@@ -77,7 +81,7 @@ namespace Scripts.Windows.Dialog
 
             if (String.IsNullOrEmpty(choice.NextNodeID) || !dialogSystem.TryGetNode(choice.NextNodeID, out var node))
             {
-                Close();
+                EventManager.Instance.Invoke(new DialogEvent.CloseDialog());
                 return;
             }
 
@@ -91,6 +95,8 @@ namespace Scripts.Windows.Dialog
             if (index >= _choices.Count)
             {
                 choice = Instantiate(_choicePrefab, _container);
+                
+                _choices.Add(choice);
             }
             else
             {

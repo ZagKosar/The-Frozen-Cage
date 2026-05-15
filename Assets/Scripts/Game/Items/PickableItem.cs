@@ -18,7 +18,7 @@ public class PickableItem : Interactable
 
     public event Action PickedUp;
 
-    public override string interactDescription => _interactDescription;
+    public override string InteractDescription => _interactDescription;
 
     public override void Interact()
     {

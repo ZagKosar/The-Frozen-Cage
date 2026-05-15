@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace Scripts.Game.Save
 {
@@ -24,13 +25,32 @@ namespace Scripts.Game.Save
 
             var jobject = new JObject();
             var savers = GameObject.FindObjectsByType<BaseSaver>(FindObjectsSortMode.None);
-
+            
+            jobject["SceneIndex"] = SceneManager.GetActiveScene().buildIndex;
+            
             foreach (var saver in savers)
             {
                 jobject.Add(saver.Key, saver.Save());
             }
 
             File.WriteAllText(saveFile, jobject.ToString());
+        }
+
+        public int GetSaveSceneIndex(int saveSlot)
+        {
+            var savePath = Path.Combine(Application.persistentDataPath, "Save");
+            var saveFile = Path.Combine(savePath, $"Save_{saveSlot}.json");
+
+            if (!Directory.Exists(savePath))
+                return 2;
+
+            if (!File.Exists(saveFile))
+                return 2;
+            
+            var json = File.ReadAllText(saveFile);
+            var jobject = JObject.Parse(json);
+            
+            return (int)jobject.GetValue("SceneIndex");
         }
 
         public void Load(int saveSlot)

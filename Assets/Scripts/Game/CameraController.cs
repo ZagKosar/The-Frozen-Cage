@@ -49,7 +49,7 @@ public class CameraController : MonoBehaviour
 
     private void WireCameraToPlayer()
     {
-        _camera.transform.SetParent(_body);
+        _camera.transform.SetParent(_body, false);
         _camera.transform.localPosition = Vector3.zero;
     }
 
@@ -61,10 +61,9 @@ public class CameraController : MonoBehaviour
         if (isHit && hit.collider.CompareTag("Interactable"))
         {
             var interactable = hit.collider.GetComponent<Interactable>();
-            if (interactable == null)
-            {
+
+            if (interactable == null || !interactable.enabled)
                 return;
-            }
 
             EventManager.Instance.Invoke(new GameEvent.InteractHover() { Interact = interactable });
         }
@@ -76,7 +75,8 @@ public class CameraController : MonoBehaviour
 
     private void UpdateCameraHeight()
     {
-        if (_playerCollider == null) return;
+        if (_playerCollider == null)
+            return;
 
         float targetY = _playerCollider.height / _bodyMaxHeight + _cameraHeightOffset;
         var bobOffset = 0f;

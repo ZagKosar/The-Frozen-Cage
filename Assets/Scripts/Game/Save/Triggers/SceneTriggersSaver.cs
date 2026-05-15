@@ -15,7 +15,8 @@ namespace Scripts.Game.Save.Triggers
     public class SceneTriggersSaver : BaseSaver
     {
         [SerializeField] private SceneTriggers _target;
-        public override string Key => "SceneTriggers";
+        [SerializeField] private string _type;
+        public override string Key => "SceneTriggers" + _type;
 
         public override JObject Save()
         {

@@ -145,8 +145,10 @@ public class AppManager : MonoBehaviour
         DontDestroyCamera();
 
         EventManager.Instance.Invoke(new UIEvents.OpenWindow() { Name = Constants.LoadingWindow });
+        
+        var sceneIndex = _saveSystem.GetSaveSceneIndex(data.Slot);
 
-        LoadScene(2)
+        LoadScene(sceneIndex)
             .ContinueWith(() =>
             {
                 LoadSave(data.Slot);
@@ -159,6 +161,7 @@ public class AppManager : MonoBehaviour
     private void LoadNextGameScene(GameEvent.LoadNextScene data)
     {
         DontDestroyCamera();
+        Debug.Log(Camera.main);
 
         LoadScene(SceneManager.GetActiveScene().buildIndex + 1).Forget();
     }
@@ -167,7 +170,7 @@ public class AppManager : MonoBehaviour
     {
         if (SceneManager.sceneCount >= scene)
         {
-            Debug.LogError($"Сцена с индексом {scene} не найдена");
+            Debug.LogError($"пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ {scene} пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ");
             return;
         }
 

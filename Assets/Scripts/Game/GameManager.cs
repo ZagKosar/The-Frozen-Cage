@@ -30,6 +30,7 @@ namespace Scripts.Game
             EventManager.Instance.Subscribe<GameEvent.InteractHoverEnd>(OnInteractHoverEnd);
             EventManager.Instance.Subscribe<GameEvent.AddItem>(OnAddItem);
             EventManager.Instance.Subscribe<DialogEvent.OpenDialog>(OnOpenDialog);
+            EventManager.Instance.Subscribe<DialogEvent.CloseDialog>(OnCloseDialog);
 
             _player.SetInventory(DependencyContainer.Inventory);
 
@@ -107,7 +108,24 @@ namespace Scripts.Game
 
         private void OnOpenDialog(DialogEvent.OpenDialog data)
         {
+            _isPaused = true;
+
+            _gameTime.Update(0f);
+
+            _cameraController.SetMouseLock(false);
+
+            EventManager.Instance.Invoke(new UIEvents.CloseWindow { Name = Constants.PlayerGUI });
             EventManager.Instance.Invoke(new UIEvents.OpenWindowWithContext { Name = Constants.DialogWindow, Context = new DialogWindowContext() { NodeID = data.NodeID } });
+        }
+
+        private void OnCloseDialog(DialogEvent.CloseDialog data)
+        {
+            _isPaused = false;
+
+            _cameraController.SetMouseLock(true);
+
+            EventManager.Instance.Invoke(new UIEvents.OpenWindow { Name = Constants.PlayerGUI });
+            EventManager.Instance.Invoke(new UIEvents.CloseWindow { Name = Constants.DialogWindow });
         }
 
         private void OnDestroy()
@@ -125,6 +143,7 @@ namespace Scripts.Game
             EventManager.Instance.Unsubscribe<GameEvent.InteractHoverEnd>(OnInteractHoverEnd);
             EventManager.Instance.Unsubscribe<GameEvent.AddItem>(OnAddItem);
             EventManager.Instance.Unsubscribe<DialogEvent.OpenDialog>(OnOpenDialog);
+            EventManager.Instance.Unsubscribe<DialogEvent.CloseDialog>(OnCloseDialog);
         }
     }
 }

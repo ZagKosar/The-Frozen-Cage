@@ -12,6 +12,24 @@ namespace Scripts.Game.Dialog
     {
         public string ID;
         public string Text;
-        public List<DialogСhoice> DialogСhoice;
+        public List<DialogСhoice> DialogСhoice = new();
+
+        private void OnValidate()
+        {
+            for (int i = 0; i < DialogСhoice.Count; i++)
+            {
+                var choice = DialogСhoice[i];
+                
+                if (choice is null)
+                    continue;
+
+                var split = ID.Split('_');
+
+                if (split.Length < 2)
+                    continue;
+
+                choice.ID = $"{split[0]}Choice_{split[1]}.{i}";
+            }
+        }
     }
 }
