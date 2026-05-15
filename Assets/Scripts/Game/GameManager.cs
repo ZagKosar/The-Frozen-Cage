@@ -58,7 +58,7 @@ namespace Scripts.Game
             _cameraController.SetMouseLock(!_isPaused);
 
             if (_isPaused)
-                EventManager.Instance.Invoke(new UIEvents.OpenWindow() { Name = Constants.PauseWindow });
+                EventManager.Instance.Invoke(new UIEvents.OpenWindow() { Name = Constants.PauseWindow }); 
             else
                 EventManager.Instance.Invoke(new UIEvents.CloseWindow() { Name = Constants.PauseWindow });
         }
@@ -126,6 +126,7 @@ namespace Scripts.Game
 
             EventManager.Instance.Invoke(new UIEvents.OpenWindow { Name = Constants.PlayerGUI });
             EventManager.Instance.Invoke(new UIEvents.CloseWindow { Name = Constants.DialogWindow });
+
         }
 
         private void OnDestroy()

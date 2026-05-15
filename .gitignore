@@ -73,3 +73,13 @@ crashlytics-build.properties
 # Temporary auto-generated Android Assets
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
 /[Aa]ssets/[Ss]treamingAssets/aa/*
+
+# Unity Builds
+Build/
+Build42/
+Builds/
+
+# Large Unity cache files
+*.assets.resS
+*.resS
+sharedassets*.assets
