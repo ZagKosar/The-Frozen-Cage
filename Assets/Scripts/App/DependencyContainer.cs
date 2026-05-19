@@ -1,4 +1,5 @@
 using Scripts.App;
+using Scripts.Game;
 using Scripts.Game.Dialog;
 using Scripts.Game.Items;
 using UnityEngine;
@@ -12,6 +13,8 @@ public class DependencyContainer : MonoBehaviour
     [SerializeField] private GameTime _gameTime;
     [SerializeField] private InputHandler _inputHandler;
     [SerializeField] private ItemsLibrary _itemsLibrary;
+    [SerializeField] private PhotoGallery _photoGallery = new();
+    [SerializeField] private Player _player;
 
     private Inventory _playerInventory = new();
 
@@ -80,6 +83,26 @@ public class DependencyContainer : MonoBehaviour
         get
         {
             return Instance._itemsLibrary;
+        }
+    }
+
+    public static PhotoGallery PhotoGallery
+    {
+        get
+        {
+            return Instance._photoGallery;
+        }
+    }
+
+    public static Player Player
+    {
+        get
+        {
+            if (Instance._player == null)
+            {
+                Instance._player = Object.FindFirstObjectByType<Player>();
+            }
+            return Instance._player;
         }
     }
 

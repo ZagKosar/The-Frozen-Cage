@@ -170,7 +170,7 @@ public class AppManager : MonoBehaviour
     {
         if (SceneManager.sceneCount >= scene)
         {
-            Debug.LogError($"����� � �������� {scene} �� �������");
+            Debug.LogError($"Сцена ID {scene} не найдена");
             return;
         }
 
