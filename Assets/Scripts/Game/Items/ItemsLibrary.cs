@@ -10,7 +10,7 @@ namespace Scripts.Game.Items
     [Serializable, CreateAssetMenu(fileName = "ItemsLibrary", menuName = "Libraries/ItemsLibrary")]
     public class ItemsLibrary : ScriptableObject
     {
-        [SerializeField] private List<Item> _items;
+        [SerializeReference] private List<Item> _items = new();
 
         public IReadOnlyList<Item> Items => _items;
 
@@ -26,20 +26,17 @@ namespace Scripts.Game.Items
         {
             return _itemsDictionary.TryGetValue(id, out item);
         }
-    }
 
-    [Serializable]
-    public class Item
-    {
-        [SerializeField] private int _id;
-        [SerializeField] private string _name;
-        [SerializeField] private string _description;
-        [SerializeField] private Transform _model;
-
-        public int Id => _id; 
-        public string Name => _name;
-        public string Description => _description;
-        public Transform Model => _model;
-
+#if UNITY_EDITOR
+        private void OnValidate()
+        {
+            for (var index = 0; index < _items.Count; index++)
+            {
+                var item = _items[index];
+                
+                item.SetID(index);
+            }
+        }
+#endif
     }
 }

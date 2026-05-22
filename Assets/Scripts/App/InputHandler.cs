@@ -11,6 +11,42 @@ namespace Scripts.App
     public class InputHandler : MonoBehaviour
     {
         private InputSystemActions _actionAsset;
+        private bool _enablePlayer = true;
+        private bool _enableUI = true;
+        private bool _enableGame = true;
+
+        public bool EnablePlayer
+        {
+            set
+            {
+                _enablePlayer = value;
+                UpdateEnables();
+            }
+
+            get { return _enablePlayer; }
+        }
+
+        public bool EnableUI
+        {
+            set
+            {
+                _enableUI = value;
+                UpdateEnables();
+            }
+
+            get { return _enableUI; }
+        }
+
+        public bool EnableGame
+        {
+            set
+            {
+                _enableGame = value;
+                UpdateEnables();
+            }
+            
+            get { return _enableGame; }
+        }
 
         // Player
         public event Action<Vector2> OnMove;
@@ -22,6 +58,7 @@ namespace Scripts.App
         public event Action OnSprintStart;
         public event Action OnSprintStop;
         public event Action OnFlashlight;
+        public event Action OnExtraAction;
 
         // UI
         public event Action OnSubmit;
@@ -49,35 +86,182 @@ namespace Scripts.App
 
             _actionAsset.Enable();
 
+            UpdateEnables();
+        }
+
+        private void UpdateEnables()
+        {
             // Player
-            _actionAsset.Player.Move.performed += callback => OnMove?.Invoke(callback.ReadValue<Vector2>());
-            _actionAsset.Player.Move.canceled += callback => OnMove?.Invoke(Vector2.zero);
-
-            _actionAsset.Player.Look.performed += callback => OnLook?.Invoke(callback.ReadValue<Vector2>());
-
-            _actionAsset.Player.Interact.performed += _ => OnInteract?.Invoke();
-
-            _actionAsset.Player.Flashlight.performed += _ => OnFlashlight?.Invoke();
-
-            _actionAsset.Player.Crouch.started += _ => OnCrouchStart?.Invoke();
-            _actionAsset.Player.Crouch.canceled += _ => OnCrouchStop?.Invoke();
-
-            _actionAsset.Player.Sprint.started += _ => OnSprintStart?.Invoke();
-            _actionAsset.Player.Sprint.canceled += _ => OnSprintStop?.Invoke();
+            if (EnablePlayer)
+                SubscribePlayer();
+            else
+                UnsubscribePlayer();
 
             // UI
-            _actionAsset.UI.Submit.performed += _ => OnSubmit?.Invoke();
-
-            _actionAsset.UI.Cancel.performed += _ => OnCancel?.Invoke();
-
-            _actionAsset.UI.Next.performed += _ => OnNext?.Invoke();
-
-            _actionAsset.UI.Previous.performed += _ => OnPrevious?.Invoke();
+            if (EnableUI)
+                SubscribeUI();
+            else
+                UnsubscribeUI();
 
             // Game
+            if (EnableGame)
+                SubscribeGame();
+            else
+                UnsubscribeGame();
+        }
 
-            _actionAsset.Game.Pause.performed += _ => OnPause?.Invoke();
-            _actionAsset.Game.Inventory.performed += _ => OnInventory?.Invoke();
+        private void SubscribePlayer()
+        {
+            _actionAsset.Player.Move.performed += OnMovePerformed;
+            _actionAsset.Player.Move.canceled += OnMoveCanceled;
+
+            _actionAsset.Player.Look.performed += OnLookPerformed;
+
+            _actionAsset.Player.Interact.performed += OnInteractPerformed;
+            
+            _actionAsset.Player.Inventory.performed += OnInventoryPerformed;
+
+            _actionAsset.Player.Flashlight.performed += OnFlashlightPerformed;
+            
+            _actionAsset.Player.ExtraAction.performed += OnExtraActionPerformed;
+
+            _actionAsset.Player.Crouch.started += OnCrouchStarted;
+            _actionAsset.Player.Crouch.canceled += OnCrouchCanceled;
+
+            _actionAsset.Player.Sprint.started += OnSprintStarted;
+            _actionAsset.Player.Sprint.canceled += OnSprintCanceled;
+        }
+
+        private void UnsubscribePlayer()
+        {
+            _actionAsset.Player.Move.performed -= OnMovePerformed;
+            _actionAsset.Player.Move.canceled -= OnMoveCanceled;
+
+            _actionAsset.Player.Look.performed -= OnLookPerformed;
+
+            _actionAsset.Player.Interact.performed -= OnInteractPerformed;
+            
+            _actionAsset.Player.Inventory.performed -= OnInventoryPerformed;
+
+            _actionAsset.Player.Flashlight.performed -= OnFlashlightPerformed;
+            
+            _actionAsset.Player.ExtraAction.performed -= OnExtraActionPerformed;
+
+            _actionAsset.Player.Crouch.started -= OnCrouchStarted;
+            _actionAsset.Player.Crouch.canceled -= OnCrouchCanceled;
+
+            _actionAsset.Player.Sprint.started -= OnSprintStarted;
+            _actionAsset.Player.Sprint.canceled -= OnSprintCanceled;
+        }
+
+        private void OnMovePerformed(InputAction.CallbackContext callback)
+        {
+            OnMove?.Invoke(callback.ReadValue<Vector2>());
+        }
+
+        private void OnMoveCanceled(InputAction.CallbackContext callback)
+        {
+            OnMove?.Invoke(Vector2.zero);
+        }
+
+        private void OnLookPerformed(InputAction.CallbackContext callback)
+        {
+            OnLook?.Invoke(callback.ReadValue<Vector2>());
+        }
+
+        private void OnInteractPerformed(InputAction.CallbackContext callback)
+        {
+            OnInteract?.Invoke();
+        }
+
+        private void OnFlashlightPerformed(InputAction.CallbackContext callback)
+        {
+            OnFlashlight?.Invoke();
+        }
+        
+        private void OnExtraActionPerformed(InputAction.CallbackContext callback)
+        {
+            OnExtraAction?.Invoke();
+        }
+
+        private void OnCrouchStarted(InputAction.CallbackContext callback)
+        {
+            OnCrouchStart?.Invoke();
+        }
+
+        private void OnCrouchCanceled(InputAction.CallbackContext callback)
+        {
+            OnCrouchStop?.Invoke();
+        }
+
+        private void OnSprintStarted(InputAction.CallbackContext callback)
+        {
+            OnSprintStart?.Invoke();
+        }
+
+        private void OnSprintCanceled(InputAction.CallbackContext callback)
+        {
+            OnSprintStop?.Invoke();
+        }
+
+        // UI подписка и отписка
+        private void SubscribeUI()
+        {
+            _actionAsset.UI.Submit.performed += OnSubmitPerformed;
+            _actionAsset.UI.Cancel.performed += OnCancelPerformed;
+            _actionAsset.UI.Next.performed += OnNextPerformed;
+            _actionAsset.UI.Previous.performed += OnPreviousPerformed;
+        }
+
+        private void UnsubscribeUI()
+        {
+            _actionAsset.UI.Submit.performed -= OnSubmitPerformed;
+            _actionAsset.UI.Cancel.performed -= OnCancelPerformed;
+            _actionAsset.UI.Next.performed -= OnNextPerformed;
+            _actionAsset.UI.Previous.performed -= OnPreviousPerformed;
+        }
+
+        // Game подписка и отписка
+        private void SubscribeGame()
+        {
+            _actionAsset.Game.Pause.performed += OnPausePerformed;
+        }
+
+        private void UnsubscribeGame()
+        {
+            _actionAsset.Game.Pause.performed -= OnPausePerformed;
+        }
+
+        // Обработчики UI
+        private void OnSubmitPerformed(InputAction.CallbackContext context)
+        {
+            OnSubmit?.Invoke();
+        }
+
+        private void OnCancelPerformed(InputAction.CallbackContext context)
+        {
+            OnCancel?.Invoke();
+        }
+
+        private void OnNextPerformed(InputAction.CallbackContext context)
+        {
+            OnNext?.Invoke();
+        }
+
+        private void OnPreviousPerformed(InputAction.CallbackContext context)
+        {
+            OnPrevious?.Invoke();
+        }
+
+        // Обработчики Game
+        private void OnPausePerformed(InputAction.CallbackContext context)
+        {
+            OnPause?.Invoke();
+        }
+
+        private void OnInventoryPerformed(InputAction.CallbackContext context)
+        {
+            OnInventory?.Invoke();
         }
     }
 }

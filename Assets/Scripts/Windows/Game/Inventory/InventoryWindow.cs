@@ -4,7 +4,9 @@ using Scripts.WindowSwitcher;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Scripts.Game.Items;
 using TMPro;
+using Unity.VisualScripting;
 using UnityEngine;
 
 namespace Scripts.Windows.Inventory
@@ -15,6 +17,7 @@ namespace Scripts.Windows.Inventory
         [SerializeField] private Transform _tempModel;
         [SerializeField] private TMP_Text _nameTMP;
         [SerializeField] private TMP_Text _descriptionTMP;
+        [SerializeField] private TMP_Text _useTMP;
 
         private List<InventoryItem> _items;
         private int _currentIndex = 0;
@@ -39,7 +42,11 @@ namespace Scripts.Windows.Inventory
 
             inputHandler.OnNext += OnNext;
             inputHandler.OnPrevious += OnPrevious;
-
+            inputHandler.OnCancel += Close;
+            inputHandler.EnableGame = false;
+            inputHandler.EnablePlayer = true;
+            inputHandler.EnableUI = true;
+            
             _previewImage.Drag += OnDrag;
 
             ShowCurrentItem();
@@ -55,6 +62,10 @@ namespace Scripts.Windows.Inventory
             {
                 inputHandler.OnNext -= OnNext;
                 inputHandler.OnPrevious -= OnPrevious;
+                inputHandler.OnCancel -= Close;
+                inputHandler.EnableGame = true;
+                inputHandler.EnablePlayer = true;
+                inputHandler.EnableUI = false;
             }
 
             _previewImage.Drag -= OnDrag;
@@ -74,13 +85,60 @@ namespace Scripts.Windows.Inventory
             var itemsLibrary = DependencyContainer.ItemsLibrary;
             var currentItem = _items[_currentIndex];
 
-            if (itemsLibrary.TryGetItem(currentItem.Id, out var item))
-            {
-                _nameTMP.text = item.Name;
-                _descriptionTMP.text = item.Description;
+            if (!itemsLibrary.TryGetItem(currentItem.Id, out var item))
+                return;
 
-                EventManager.Instance.Invoke(new PreviewEvent.Show() { Model = item.Model });
+            var isUsable = item is UsableItem;
+            var inputHandler = DependencyContainer.InputHandler;
+
+            _nameTMP.text = item.Name;
+            _descriptionTMP.text = item.Description;
+
+            EventManager.Instance.Invoke(new PreviewEvent.Show() { Model = item.Model });
+
+            _useTMP.gameObject.SetActive(isUsable);
+
+            inputHandler.OnSubmit -= EquipItem;
+
+            if (!isUsable)
+                return;
+
+            if (((UsableItem)item).IsEquiped)
+            {
+                inputHandler.OnSubmit += UnequipItem;
+                inputHandler.OnSubmit -= EquipItem;
+                
+                _useTMP.text = "[F] Снять предмет";
             }
+            else
+            {
+                inputHandler.OnSubmit += EquipItem;
+                inputHandler.OnSubmit -= UnequipItem;
+                
+                _useTMP.text = "[F] Взять предмет";
+            }
+        }
+
+        private void EquipItem()
+        {
+            var itemsLibrary = DependencyContainer.ItemsLibrary;
+            var currentItem = _items[_currentIndex];
+
+            if (!itemsLibrary.TryGetItem(currentItem.Id, out var item) || item is not UsableItem usableItem)
+                return;
+
+            usableItem.Pickup();
+        }
+
+        private void UnequipItem()
+        {
+            var itemsLibrary = DependencyContainer.ItemsLibrary;
+            var currentItem = _items[_currentIndex];
+
+            if (!itemsLibrary.TryGetItem(currentItem.Id, out var item) || item is not UsableItem usableItem)
+                return;
+            
+            usableItem.Unequipe();
         }
 
         private void OnNext()
@@ -103,6 +161,7 @@ namespace Scripts.Windows.Inventory
 
                 EventManager.Instance.Invoke(new PreviewEvent.ShowNext() { NextModel = item.Model });
             }
+
             _isPlaying = true;
             Invoke(nameof(StopPlaying), 0.5f);
         }

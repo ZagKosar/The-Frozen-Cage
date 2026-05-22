@@ -17,6 +17,7 @@ namespace Scripts.App.Constants
         public static readonly string SaveWindow = "save_window";
         public static readonly string LoadingWindow = "loading_window";
         public static readonly string DialogWindow = "dialog_window";
+        public static readonly string GalleryWindow = "gallery_window";
 
         public static IReadOnlyList<string> AllWindows = new List<string>()
         {
@@ -27,7 +28,8 @@ namespace Scripts.App.Constants
             PlayerGUI,
             SaveWindow,
             LoadingWindow,
-            DialogWindow
+            DialogWindow,
+            GalleryWindow
         };
     }
 }

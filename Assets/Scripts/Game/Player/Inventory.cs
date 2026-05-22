@@ -5,7 +5,10 @@ using System.Collections.Generic;
 [Serializable]
 public class Inventory
 {
-    [JsonProperty] private List<InventoryItem> _items = new();
+    [JsonProperty] private List<InventoryItem> _items = new()
+    {
+        new InventoryItem(){Id = 2, Amount = 1}
+    };
 
     [JsonIgnore] public IReadOnlyList<InventoryItem> Items => _items;
 
