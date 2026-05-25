@@ -51,13 +51,13 @@ namespace Scripts.App
         // Player
         public event Action<Vector2> OnMove;
         public event Action<Vector2> OnLook;
-
         public event Action OnInteract;
         public event Action OnCrouchStart;
         public event Action OnCrouchStop;
         public event Action OnSprintStart;
         public event Action OnSprintStop;
         public event Action OnFlashlight;
+        public event Action OnAction;
         public event Action OnExtraAction;
 
         // UI
@@ -123,7 +123,8 @@ namespace Scripts.App
 
             _actionAsset.Player.Flashlight.performed += OnFlashlightPerformed;
             
-            _actionAsset.Player.ExtraAction.performed += OnExtraActionPerformed;
+            _actionAsset.Player.Action.started += OnActionPerformed;
+            _actionAsset.Player.ExtraAction.started += OnExtraActionPerformed;
 
             _actionAsset.Player.Crouch.started += OnCrouchStarted;
             _actionAsset.Player.Crouch.canceled += OnCrouchCanceled;
@@ -145,7 +146,8 @@ namespace Scripts.App
 
             _actionAsset.Player.Flashlight.performed -= OnFlashlightPerformed;
             
-            _actionAsset.Player.ExtraAction.performed -= OnExtraActionPerformed;
+            _actionAsset.Player.Action.started -= OnActionPerformed;
+            _actionAsset.Player.ExtraAction.started -= OnExtraActionPerformed;
 
             _actionAsset.Player.Crouch.started -= OnCrouchStarted;
             _actionAsset.Player.Crouch.canceled -= OnCrouchCanceled;
@@ -177,6 +179,11 @@ namespace Scripts.App
         private void OnFlashlightPerformed(InputAction.CallbackContext callback)
         {
             OnFlashlight?.Invoke();
+        }
+        
+        private void OnActionPerformed(InputAction.CallbackContext callback)
+        {
+            OnAction?.Invoke();
         }
         
         private void OnExtraActionPerformed(InputAction.CallbackContext callback)

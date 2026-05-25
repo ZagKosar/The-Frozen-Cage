@@ -50,7 +50,7 @@ namespace Scripts.Game.Dialog
         {
             if (data.NodeID != _startNodeID)
                 return;
-
+            
             _animator.SetBool("IsTalking", true);
         }
 

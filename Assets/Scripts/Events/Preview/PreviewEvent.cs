@@ -16,14 +16,17 @@ namespace Scripts.Events.Preview
         public struct ShowNext
         {
             public Transform NextModel;
+            public Vector3 Scale;
         }
         public struct ShowPrevious
         {
             public Transform PreviousModel;
+            public Vector3 Scale;
         }
         public struct Show
         {
             public Transform Model;
+            public Vector3 Scale;
         }
     }
 }

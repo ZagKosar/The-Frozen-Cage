@@ -29,6 +29,7 @@ namespace Scripts.Game
             EventManager.Instance.Subscribe<GameEvent.InteractHover>(OnInteractHover);
             EventManager.Instance.Subscribe<GameEvent.InteractHoverEnd>(OnInteractHoverEnd);
             EventManager.Instance.Subscribe<GameEvent.AddItem>(OnAddItem);
+            EventManager.Instance.Subscribe<GameEvent.OnGallery>(OnGallery);
             EventManager.Instance.Subscribe<DialogEvent.OpenDialog>(OnOpenDialog);
             EventManager.Instance.Subscribe<DialogEvent.CloseDialog>(OnCloseDialog);
 
@@ -77,6 +78,25 @@ namespace Scripts.Game
             else
                 EventManager.Instance.Invoke(new UIEvents.CloseWindow() { Name = Constants.InventoryWindow });
         }
+        
+        private void OnGallery(GameEvent.OnGallery _)
+        {
+            var inputHandler = DependencyContainer.InputHandler;
+            
+            _isPaused = !_isPaused;
+
+            if (_isPaused)
+                _gameTime.Update(0f);
+
+            _cameraController.SetMouseLock(!_isPaused);
+
+            inputHandler.EnablePlayer = !_isPaused;
+            
+            if (_isPaused)
+                EventManager.Instance.Invoke(new UIEvents.OpenWindow() { Name = Constants.GalleryWindow });
+            else
+                EventManager.Instance.Invoke(new UIEvents.CloseWindow() { Name = Constants.GalleryWindow });
+        }
 
         private void OnInteract()
         {
@@ -108,25 +128,32 @@ namespace Scripts.Game
 
         private void OnOpenDialog(DialogEvent.OpenDialog data)
         {
+            var inputHandler = DependencyContainer.InputHandler;
+            
             _isPaused = true;
 
             _gameTime.Update(0f);
 
             _cameraController.SetMouseLock(false);
-
+            
+            inputHandler.EnablePlayer = false;
+            
             EventManager.Instance.Invoke(new UIEvents.CloseWindow { Name = Constants.PlayerGUI });
             EventManager.Instance.Invoke(new UIEvents.OpenWindowWithContext { Name = Constants.DialogWindow, Context = new DialogWindowContext() { NodeID = data.NodeID } });
         }
 
         private void OnCloseDialog(DialogEvent.CloseDialog data)
         {
+            var inputHandler = DependencyContainer.InputHandler;
+            
             _isPaused = false;
 
             _cameraController.SetMouseLock(true);
+            
+            inputHandler.EnablePlayer = true;
 
             EventManager.Instance.Invoke(new UIEvents.OpenWindow { Name = Constants.PlayerGUI });
             EventManager.Instance.Invoke(new UIEvents.CloseWindow { Name = Constants.DialogWindow });
-
         }
 
         private void OnDestroy()

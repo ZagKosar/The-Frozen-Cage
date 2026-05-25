@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 341834485106688912}
   - component: {fileID: 8516926296473428633}
+  - component: {fileID: 5590762949327175187}
   m_Layer: 0
   m_Name: '[DependencyContainer]'
   m_TagString: Untagged
@@ -68,3 +69,19 @@ MonoBehaviour:
   _audioMaster: {fileID: 0}
   _inputHandler: {fileID: 0}
   _itemsLibrary: {fileID: 11400000, guid: 455ebb48860ff2d4194e4e16f1c98c93, type: 2}
+  _photoGallery:
+    _photosBase64: []
+    _photos: []
+  _player: {fileID: 0}
+--- !u!114 &5590762949327175187
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1998386152486979447}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ca68f479b1f4405595dd5dd184426fad, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Game.Save.PhotoGallery.PhotoGallerySaver

@@ -27,6 +27,7 @@ MonoBehaviour:
         _description: "\u0411\u0435\u0439\u0434\u0436 \u0441\u043E\u0442\u0440\u0443\u0434\u043D\u0438\u0446\u044B
           \u0437\u0430\u043A\u0443\u0441\u043E\u0447\u043D\u043E\u0439."
         _model: {fileID: -8679921383154817045, guid: 70d934ddcb8544b4a8fe8c3ce4ca901d, type: 3}
+        _previewScale: {x: 1, y: 1, z: 1}
     - rid: 632070142399610959
       type: {class: Item, ns: Scripts.Game.Items, asm: Assembly-CSharp}
       data:
@@ -37,6 +38,7 @@ MonoBehaviour:
           \u0432 \u043F\u0435\u0440\u0435\u043C\u0435\u0448\u043A\u0443 \u0441 \u043D\u0435\u0441\u043A\u043E\u043B\u044C\u043A\u0438\u043C\u0438
           \u0437\u043D\u0430\u043A\u043E\u043C\u044B\u043C\u0438."
         _model: {fileID: -8679921383154817045, guid: f6f77774c3b9b614a9002f0e03d5ed54, type: 3}
+        _previewScale: {x: 2, y: 2, z: 2}
     - rid: 632070142399610961
       type: {class: PhotoCamera, ns: Scripts.Game.Items, asm: Assembly-CSharp}
       data:
@@ -44,4 +46,5 @@ MonoBehaviour:
         _name: "\u0424\u043E\u0442\u043E\u0430\u043F\u043F\u0430\u0440\u0430\u0442"
         _description: "\u041F\u043E\u043C\u043E\u0436\u0435\u0442 \u0437\u0430\u043F\u0435\u0447\u0430\u0442\u043B\u0438\u0442\u044C
           \u0432\u0441\u0451 \u043D\u0430 \u0441\u0432\u0435\u0442\u0435."
-        _model: {fileID: -8679921383154817045, guid: 6aaa1849a27182442a9f763da0f2d568, type: 3}
+        _model: {fileID: 5468767925556609612, guid: 6b7a8510a95c28443a51192dea5ae71d, type: 3}
+        _previewScale: {x: 0.1, y: 0.1, z: 0.1}

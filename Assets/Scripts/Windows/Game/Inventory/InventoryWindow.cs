@@ -4,6 +4,7 @@ using Scripts.WindowSwitcher;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Scripts.Events.Game;
 using Scripts.Game.Items;
 using TMPro;
 using Unity.VisualScripting;
@@ -46,7 +47,7 @@ namespace Scripts.Windows.Inventory
             inputHandler.EnableGame = false;
             inputHandler.EnablePlayer = true;
             inputHandler.EnableUI = true;
-            
+
             _previewImage.Drag += OnDrag;
 
             ShowCurrentItem();
@@ -94,7 +95,7 @@ namespace Scripts.Windows.Inventory
             _nameTMP.text = item.Name;
             _descriptionTMP.text = item.Description;
 
-            EventManager.Instance.Invoke(new PreviewEvent.Show() { Model = item.Model });
+            EventManager.Instance.Invoke(new PreviewEvent.Show() { Model = item.Model, Scale = item.PreviewScale});
 
             _useTMP.gameObject.SetActive(isUsable);
 
@@ -107,14 +108,14 @@ namespace Scripts.Windows.Inventory
             {
                 inputHandler.OnSubmit += UnequipItem;
                 inputHandler.OnSubmit -= EquipItem;
-                
+
                 _useTMP.text = "[F] Снять предмет";
             }
             else
             {
                 inputHandler.OnSubmit += EquipItem;
                 inputHandler.OnSubmit -= UnequipItem;
-                
+
                 _useTMP.text = "[F] Взять предмет";
             }
         }
@@ -128,6 +129,10 @@ namespace Scripts.Windows.Inventory
                 return;
 
             usableItem.Pickup();
+
+            EventManager.Instance.Invoke(new GameEvent.OnPlayerItemEquip() { UsableItem = usableItem });
+
+            ShowCurrentItem();
         }
 
         private void UnequipItem()
@@ -137,8 +142,12 @@ namespace Scripts.Windows.Inventory
 
             if (!itemsLibrary.TryGetItem(currentItem.Id, out var item) || item is not UsableItem usableItem)
                 return;
-            
+
             usableItem.Unequipe();
+
+            EventManager.Instance.Invoke(new GameEvent.OnPlayerItemUnEquip());
+
+            ShowCurrentItem();
         }
 
         private void OnNext()
@@ -159,7 +168,7 @@ namespace Scripts.Windows.Inventory
                 _nameTMP.text = item.Name;
                 _descriptionTMP.text = item.Description;
 
-                EventManager.Instance.Invoke(new PreviewEvent.ShowNext() { NextModel = item.Model });
+                EventManager.Instance.Invoke(new PreviewEvent.ShowNext() { NextModel = item.Model, Scale = item.PreviewScale });
             }
 
             _isPlaying = true;
@@ -187,7 +196,7 @@ namespace Scripts.Windows.Inventory
                 _nameTMP.text = item.Name;
                 _descriptionTMP.text = item.Description;
 
-                EventManager.Instance.Invoke(new PreviewEvent.ShowPrevious() { PreviousModel = item.Model });
+                EventManager.Instance.Invoke(new PreviewEvent.ShowPrevious() { PreviousModel = item.Model, Scale = item.PreviewScale});
             }
 
             _isPlaying = true;

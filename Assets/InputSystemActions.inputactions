@@ -61,6 +61,15 @@
                     "initialStateCheck": false
                 },
                 {
+                    "name": "Action",
+                    "type": "Button",
+                    "id": "44b0895c-e1df-46cc-9cfe-25deda72651e",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
                     "name": "ExtraAction",
                     "type": "Button",
                     "id": "8bacbdfe-6a82-4adb-a73f-043be3b05a67",
@@ -347,11 +356,22 @@
                 {
                     "name": "",
                     "id": "d7b4d328-38a8-4c58-a775-e6ea0d4a4054",
-                    "path": "<Keyboard>/g",
+                    "path": "<Mouse>/rightButton",
                     "interactions": "",
                     "processors": "",
                     "groups": ";Keyboard&Mouse;Touch;Joystick;XR",
                     "action": "ExtraAction",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "df311c87-abd1-43ea-8428-ab6d4fcc90e6",
+                    "path": "<Mouse>/leftButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": ";Keyboard&Mouse;Touch;Joystick;XR",
+                    "action": "Action",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },

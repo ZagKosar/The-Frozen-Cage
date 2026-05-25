@@ -1,4 +1,5 @@
 ﻿using Scripts.App.Constants;
+using Scripts.Events.Game;
 using UnityEngine;
 
 namespace Scripts.Game.Items
@@ -16,13 +17,10 @@ namespace Scripts.Game.Items
 
         public override void Pickup()
         {
-            var inputHandler = DependencyContainer.InputHandler;
             var camera = GetOrCreateCamera();
             camera.SetActive(true);
 
             _isEquiped = true;
-
-            inputHandler.OnExtraAction += OnExtraAction;
         }
 
         public override void Unequipe()
@@ -60,11 +58,7 @@ namespace Scripts.Game.Items
 
         public override void AltUse()
         {
-        }
-
-        private void OnExtraAction()
-        {
-            EventManager.Instance.Invoke(new UIEvents.OpenWindow { Name = Constants.GalleryWindow });
+            EventManager.Instance.Invoke(new GameEvent.OnGallery());
         }
 
         private GameObject GetOrCreateCamera()
@@ -72,11 +66,12 @@ namespace Scripts.Game.Items
             if (_camera == null)
             {
                 var screenPosition = new Vector3(Screen.width, 0, Camera.main.nearClipPlane);
-                var position = Camera.main.ScreenToWorldPoint(screenPosition);
-                var player = DependencyContainer.Player;
+                var mainCameraTransform = Camera.main.transform;
+                var position = Camera.main.ScreenToWorldPoint(screenPosition) + mainCameraTransform.forward * 0.52f + mainCameraTransform.right * 0.3f + mainCameraTransform.up * -0.3f;
 
                 _camera = GameObject.Instantiate(_model.gameObject, position, Quaternion.identity);
-                _camera.transform.SetParent(player.transform, false);
+                _camera.transform.SetParent(mainCameraTransform, true);
+                _camera.transform.localEulerAngles = Vector3.right * 90;
             }
 
             return _camera;

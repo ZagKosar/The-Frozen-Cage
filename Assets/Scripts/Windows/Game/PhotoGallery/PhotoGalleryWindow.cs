@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Scripts.Events.Game;
 using Scripts.WindowSwitcher;
 using UnityEngine;
 using UnityEngine.UI;
@@ -17,12 +18,12 @@ namespace Windows.Game.PhotoGallery
         
         public override void Load()
         {
-            _closeButton.onClick.AddListener(Close);
+            _closeButton.onClick.AddListener(OnCloseClick);
         }
-
+        
         public override void Destroy()
         {
-            _closeButton.onClick.RemoveListener(Close);
+            _closeButton.onClick.RemoveListener(OnCloseClick);
         }
 
         public override void Open(object context = null)
@@ -45,6 +46,11 @@ namespace Windows.Game.PhotoGallery
             gameObject.SetActive(false);
         }
 
+        private void OnCloseClick()
+        {
+            EventManager.Instance.Invoke(new GameEvent.OnGallery());
+        }
+
         private Photo GetOrCreatePhoto(int index)
         {
             Photo photo;
@@ -52,6 +58,7 @@ namespace Windows.Game.PhotoGallery
             if (_photos.Count <= index)
             {
                 photo = Instantiate(_photoPrefab, _container);
+                _photos.Add(photo);
             }
             else
             {

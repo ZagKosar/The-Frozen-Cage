@@ -93,6 +93,7 @@ public class AppManager : MonoBehaviour
         EventManager.Instance.Invoke(new UIEvents.OpenWindow() { Name = Constants.LoadingWindow });
 
         DependencyContainer.Inventory = new();
+        DependencyContainer.PhotoGallery.SetPhotos(new());
 
         LoadScene(2).ContinueWith(() => EventManager.Instance.Invoke(new UIEvents.CloseWindow() { Name = Constants.LoadingWindow })).Forget();
     }

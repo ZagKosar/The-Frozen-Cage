@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Scripts.Game.Items;
 
 namespace Scripts.Events.Game
 {
@@ -36,6 +37,21 @@ namespace Scripts.Events.Game
         }
 
         public struct LoadNextScene
+        {
+            
+        }
+
+        public struct OnPlayerItemEquip
+        {
+            public UsableItem UsableItem;
+        }
+        
+        public struct OnPlayerItemUnEquip
+        {
+            
+        }
+
+        public struct OnGallery
         {
             
         }

@@ -47,6 +47,7 @@ namespace Scripts.Game.Preview
             _tempModel = _currentModel;
 
             _currentModel = Instantiate(data.NextModel, parent);
+            _currentModel.localScale = data.Scale;
             _currentModel.localPosition = Vector3.right * -_swipeOffset;
             _currentModel.DOMoveX(0, _swipeDuration);
 
@@ -70,6 +71,7 @@ namespace Scripts.Game.Preview
             _tempModel = _currentModel;
 
             _currentModel = Instantiate(data.PreviousModel, parent);
+            _currentModel.localScale = data.Scale;
             _currentModel.localPosition = Vector3.right * _swipeOffset;
             _currentModel.DOMoveX(0, _swipeDuration);
 
@@ -88,6 +90,7 @@ namespace Scripts.Game.Preview
                 Destroy(_currentModel.gameObject);
             }
             _currentModel = Instantiate(data.Model, _container);
+            _currentModel.localScale = data.Scale;
             _currentModel.localPosition = Vector3.zero;
         }
     }

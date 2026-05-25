@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.TextCore.Text;
 
@@ -8,10 +9,11 @@ namespace Scripts.Game
     [Serializable]
     public class PhotoGallery
     {
-        [SerializeField] private List<string> _photosBase64 = new();
-        [SerializeField] private List<Sprite> _photos = new();
+        [SerializeField, JsonProperty] private List<string> _photosBase64 = new();
+        [SerializeField, JsonProperty] private List<Sprite> _photos = new();
         
-        public IReadOnlyList<Sprite> Photos => _photos;
+        [JsonIgnore] public IReadOnlyList<string> PhotosBase64 => _photosBase64;
+        [JsonIgnore] public IReadOnlyList<Sprite> Photos => _photos;
 
         public void SetPhotos(List<string> photos)
         {
