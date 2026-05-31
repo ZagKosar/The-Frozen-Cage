@@ -10,6 +10,7 @@ namespace Scripts.Game.Items
             set;
         }
         
+        public virtual void Initialize(){}
         public abstract void Pickup();
         public abstract void Unequipe();
         public abstract void Use();

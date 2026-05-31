@@ -10,7 +10,7 @@ namespace Scripts.Game
     public class PhotoGallery
     {
         [SerializeField, JsonProperty] private List<string> _photosBase64 = new();
-        [SerializeField, JsonProperty] private List<Sprite> _photos = new();
+        [SerializeField, JsonIgnore] private List<Sprite> _photos = new();
         
         [JsonIgnore] public IReadOnlyList<string> PhotosBase64 => _photosBase64;
         [JsonIgnore] public IReadOnlyList<Sprite> Photos => _photos;

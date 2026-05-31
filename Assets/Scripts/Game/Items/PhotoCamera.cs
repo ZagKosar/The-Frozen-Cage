@@ -1,18 +1,27 @@
-﻿using Scripts.App.Constants;
+﻿using System;
+using Scripts.App.Constants;
+using Scripts.Events.App;
 using Scripts.Events.Game;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace Scripts.Game.Items
 {
+    [Serializable]
     public class PhotoCamera : UsableItem
     {
-        private GameObject _camera;
+        [NonSerialized] private GameObject _camera;
         private bool _isEquiped = false;
 
         public override bool IsEquiped
         {
             get => _isEquiped;
             set { _isEquiped = value; }
+        }
+
+        public override void Initialize()
+        {
+            EventManager.Instance.Subscribe<AppEvents.StartSceneSwitching>(OnStartSceneSwitching);
         }
 
         public override void Pickup()
@@ -75,6 +84,11 @@ namespace Scripts.Game.Items
             }
 
             return _camera;
+        }
+
+        private void OnStartSceneSwitching(AppEvents.StartSceneSwitching _)
+        {
+            _camera?.SetActive(false);
         }
     }
 }

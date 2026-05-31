@@ -19,7 +19,14 @@ namespace Scripts.Game.Items
         public void Initialize()
         {
             foreach (var item in _items)
+            {
                 _itemsDictionary[item.Id] = item;
+                
+                if (item is not UsableItem usableItem)
+                    continue;
+                
+                usableItem.Initialize();
+            }
         }
 
         public bool TryGetItem(int id, out Item item)

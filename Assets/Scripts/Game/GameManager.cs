@@ -51,12 +51,16 @@ namespace Scripts.Game
 
         private void OnPause()
         {
+            var inputHandler = DependencyContainer.InputHandler;
+            
             _isPaused = !_isPaused;
 
             if (_isPaused)
                 _gameTime.Update(0f);
 
             _cameraController.SetMouseLock(!_isPaused);
+            
+            inputHandler.EnablePlayer = !_isPaused;
 
             if (_isPaused)
                 EventManager.Instance.Invoke(new UIEvents.OpenWindow() { Name = Constants.PauseWindow }); 
@@ -66,12 +70,16 @@ namespace Scripts.Game
 
         private void OnInventory()
         {
+            var inputHandler = DependencyContainer.InputHandler;
+            
             _isPaused = !_isPaused;
 
             if (_isPaused)
                 _gameTime.Update(0f);
 
             _cameraController.SetMouseLock(!_isPaused);
+            
+            inputHandler.EnablePlayer = !_isPaused;
 
             if (_isPaused)
                 EventManager.Instance.Invoke(new UIEvents.OpenWindow() { Name = Constants.InventoryWindow });

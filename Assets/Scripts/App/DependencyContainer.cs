@@ -133,5 +133,7 @@ public class DependencyContainer : MonoBehaviour
         _dialogSystem.Initialize();
         _inputHandler.Initialize();
         _itemsLibrary.Initialize();
+        
+        DontDestroyOnLoad(gameObject);
     }
 }

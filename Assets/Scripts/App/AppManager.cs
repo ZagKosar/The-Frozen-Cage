@@ -169,12 +169,14 @@ public class AppManager : MonoBehaviour
 
     private async UniTask LoadScene(int scene)
     {
-        if (SceneManager.sceneCount >= scene)
+        if (SceneManager.sceneCountInBuildSettings <= scene)
         {
             Debug.LogError($"Сцена ID {scene} не найдена");
             return;
         }
-
+        
+        EventManager.Instance.Invoke(new AppEvents.StartSceneSwitching());
+        
         await SceneManager.LoadSceneAsync(scene);
     }
 

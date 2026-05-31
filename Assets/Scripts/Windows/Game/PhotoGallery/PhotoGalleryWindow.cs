@@ -37,6 +37,11 @@ namespace Windows.Game.PhotoGallery
                 photo.SetImage(sprite);
                 photo.gameObject.SetActive(true);
             }
+
+            for (var index = gallery.Photos.Count; index < _photos.Count; index++)
+            {
+                _photos[index].gameObject.SetActive(false);
+            }
             
             gameObject.SetActive(true);
         }

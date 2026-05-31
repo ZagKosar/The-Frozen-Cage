@@ -17,5 +17,10 @@ namespace Scripts.Events.App
         {
             public int Slot;
         }
+
+        public struct StartSceneSwitching
+        {
+            
+        }
     }
 }
