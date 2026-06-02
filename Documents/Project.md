@@ -1,6 +1,6 @@
-# Project: The Frozen Cage — Ultra-Detailed Code Reference
+# Project: The Frozen Cage — Code Reference
 
-> Unity 6000.3.7f1 (URP) | C# | 80+ scripts
+> Unity 6000.3.7f1 (URP) | C# | 82 files
 
 ---
 
@@ -8,1344 +8,596 @@
 
 1. [Overview](#overview)
 2. [Architecture](#architecture)
-3. [Scripts.App (Application Core)](#scriptsapp)
-4. [Scripts.Events (Event System)](#scriptsevents)
-5. [Scripts.Game (Game Logic)](#scriptsgame)
-6. [Scripts.Windows (UI)](#scriptswindows)
-7. [Scripts.World (Environment)](#scriptsworld)
-8. [Scripts.Utilities](#scriptsutilities)
-9. [Scripts.Settings](#scriptssettings)
+3. [App Layer](#app-layer)
+4. [Events System](#events-system)
+5. [Game Layer](#game-layer)
+6. [UI / Window Layer](#ui--window-layer)
+7. [Other Components](#other-components)
 
 ---
 
 ## Overview
 
-**The Frozen Cage** is a first-person psychological horror game built in Unity 6000.3.7f1 using the Universal Render Pipeline (URP). The player explores an abandoned frozen research facility, taking photographs to document evidence, avoiding hostile entities, collecting items, and solving environmental puzzles.
+**The Frozen Cage** is a first-person psychological horror game. The player explores an abandoned frozen research facility, photographs evidence, avoids a patrolling NPC, collects items, and solves environmental puzzles.
 
 ### Key Systems
-- **Event-driven architecture** — decoupled communication via struct-based events
-- **Service locator** (DependencyContainer) — global access to core services
-- **Window stack** (WindowSwitcher) — MVC-like UI navigation
-- **Component-based save system** — each MonoBehaviour serializes its own data
-- **Trigger composition** — modular trigger system with multiple condition/action types
+
+- **Event-driven communication** — singleton `EventManager` with generic `Subscribe<T>`/`Invoke<T>` pattern
+- **Service locator** (`DependencyContainer`) — global static access to core services via named properties
+- **Window stack** (`WindowSwitcher`) — `WindowPanel`-based UI with navigation stack and priority sorting
+- **Component-based save system** — `BaseSaver` abstract class, each `MonoBehaviour` serializes its own `JObject`
+- **Trigger composition** — `Trigger` with `ICondition` list (AND logic) + `ITriggerEvent` actions, supports `OrCondition`
+- **Dialog system** — `DialogNode` ScriptableObjects with `DialogСhoice` list, navigated by `DialogWindow`
 
 ---
 
 ## Architecture
 
-### EventManager (`Scripts.App.Core`)
-The backbone of inter-system communication. Uses a generic `EventManager<T>` where `T` is a struct.
+### EventManager (`Scripts.Events`)
+
+Non-generic singleton. Stores subscribers in `Dictionary<Type, List<Delegate>>`.
 
 | Method | Description |
 |--------|-------------|
-| `AddListener(Action<T>)` | Subscribe to event type T |
-| `RemoveListener(Action<T>)` | Unsubscribe from event type T |
-| `Broadcast(T)` | Invoke all listeners of event type T |
+| `Subscribe<T>(Action<T>)` | Register callback for event type `T` |
+| `Unsubscribe<T>(Action<T>)` | Remove callback |
+| `Invoke<T>(T data)` | Invoke all callbacks for type `T` |
+| `ClearAll()` | Clear all subscribers |
+| `CleanupDestroyedSubscribers()` | Remove subscribers whose `MonoBehaviour` target was destroyed (called on scene unload) |
 
-### AutoEventBehaviour (`Scripts.App.Core`)
-Abstract base class. On `OnEnable` subscribes via `AutoEventProvider`, on `OnDisable` auto-unsubscribes. Any MonoBehaviour that listens to events inherits from this.
+### DependencyContainer (`Scripts.App`)
 
-### AutoEventProvider (`Scripts.App.Core`)
-Generates `addListener`/`removeListener` calls for each listener method marked with attributes. Works with `AutoEventBehaviour` to wire up subscriptions automatically.
+Singleton service locator. All dependencies are wired in the Inspector and exposed as static read-only properties.
 
-### DependencyContainer (`Scripts.App.Core`)
-Generic singleton service locator.
+```csharp
+DependencyContainer.ClientSettings
+DependencyContainer.DialogSystem
+DependencyContainer.GraphicsMaster
+DependencyContainer.AudioMaster
+DependencyContainer.GameTime
+DependencyContainer.InputHandler
+DependencyContainer.ItemsLibrary
+DependencyContainer.PhotoGallery
+DependencyContainer.Player
+DependencyContainer.Inventory
+```
 
-| Method | Description |
-|--------|-------------|
-| `Register<T>(T)` | Register a service instance |
-| `RegisterAsSingle<T>()` | Auto-create and register a MonoBehaviour as singleton |
-| `Resolve<T>()` | Get registered service by type |
-| `Unregister<T>()` | Remove a service from container |
+### WindowSwitcher (`Scripts.WindowSwitcher`)
 
-Registered services: SaveSystem, Localization, AudioManager, InputManager, GameManager, etc.
-
-### WindowSwitcher (`Scripts.Windows.Base`)
-Stack-based window navigation system.
-
-| Method | Description |
-|--------|-------------|
-| `Open(string name, object context)` | Push window onto stack with optional context |
-| `Close(string name)` | Remove specific window from stack |
-| `CloseLast()` | Pop top window |
-| `CloseAll()` | Clear entire stack |
-| `TryGetWindow(string)` | Find window by name |
-| `GetWindow<T>(string)` | Generic typed window access |
-
-### SaveSystem (`Scripts.App.Systems`)
-Component-based save strategy. Each MonoBehaviour implements `ISaveableComponent` to provide its own serialization logic.
+Stack-based window navigation. Maintains prefab dictionary, runtime instance dictionary, and navigation stack. All windows inherit from `WindowPanel`.
 
 | Method | Description |
 |--------|-------------|
-| `Save(string slot)` | Serialize all registered components to slot |
-| `Load(string slot)` | Deserialize and restore state from slot |
-| `Delete(string slot)` | Remove save file |
-| `GetSaves()` | List available saves |
-| `RegisterComponent(ISaveableComponent)` | Add component to save list |
-| `UnregisterComponent(ISaveableComponent)` | Remove from save list |
+| `ShowWindow(name, closePrevious, context)` | Show window by name, optionally close previous |
+| `CloseWindow(name)` | Close window by name |
+| `CloseLast()` | Pop top window from stack |
+
+### SaveSystem (`Scripts.Game.Save`)
+
+Discovers all `BaseSaver` components in the scene via `FindObjectsByType`, serializes each to a `JObject`, and writes to `Save_{slot}.json`. Uses Newtonsoft.Json.
+
+| Method | Description |
+|--------|-------------|
+| `Save(slot)` | Collect all `BaseSaver` data, serialize to JSON file |
+| `Load(slot)` | Read JSON file, deserialize, restore each `BaseSaver` |
+| `GetSaveSceneIndex(slot)` | Read scene index from save file |
+
+### Trigger System (`Scripts.Game.Triggers`)
+
+Composable condition-action system. A `Trigger` monitors `List<ICondition>` — when ALL conditions are satisfied, it executes `List<ITriggerEvent>`.
+
+| Component | Role |
+|-----------|------|
+| `Trigger` | Serializable condition/event container with GUID, play-once, enable-on-start |
+| `SceneTriggers` | `MonoBehaviour` that manages all triggers in a scene |
+| `ICondition` | Interface: `Complete` event + `Initialize()` |
+| `ITriggerEvent` | Interface: `Run()` |
+| `OrCondition` | Composite — completes when ANY child condition completes |
 
 ---
 
-## Scripts.App
+## App Layer
 
-### App.Core
+### AppManager (`App/AppManager.cs`)
 
-#### `Bootstrap.cs`
 | Aspect | Detail |
 |--------|--------|
-| **Path** | `Assets/Scripts/App/Core/Bootstrap.cs` |
-| **Class** | `Bootstrap : MonoBehaviour` |
-| **Purpose** | Entry point. Runs on scene load before anything else. Registers all core services in DependencyContainer, initializes SaveSystem, loads settings, and fires `GameEvent.LoadNextScene` to transition to the main menu. |
+| **Class** | `AppManager : MonoBehaviour` |
+| **Purpose** | Top-level application controller. Entry point. Initializes all systems on scene 1. |
+| **Fields** | `_windowSwitcher`, `_saveSystem` |
+| **Key Methods** | `Start()` — initialize DependencyContainer, load settings, open MainMenu, subscribe to all UI/App/Game events; `OpenWindow/CloseWindow/CloseLastWindow/QuitGame/StartNewGame/ExitToMainMenu/SaveGame/LoadGame/LoadNextGameScene` — event handlers; `LoadScene(int)` — async scene loading with `UniTask` |
 
-#### `DependencyContainer.cs`
+### DependencyContainer (`App/DependencyContainer.cs`)
+
 | Aspect | Detail |
 |--------|--------|
-| **Path** | `Assets/Scripts/App/Core/DependencyContainer.cs` |
 | **Class** | `DependencyContainer : MonoBehaviour` |
-| **Purpose** | Global service locator (singleton pattern). |
-| **Fields** | `_dependencies : Dictionary<Type, object>` |
-| **Methods** | `Awake()` — singleton init, DontDestroyOnLoad; `Register<T>(T)`, `Resolve<T>()`, `Unregister<T>()`, `Instantiate<T>()` |
-| **Usage** | `DependencyContainer.Resolve<SaveSystem>()` throughout the codebase |
+| **Purpose** | Singleton service locator. All dependencies via Inspector. |
+| **Pattern** | Singleton via `Instance` property (lazy `FindFirstObjectByType`). Static properties proxy to serialized fields. |
+| **Properties** | `ClientSettings`, `DialogSystem`, `GraphicsMaster`, `AudioMaster`, `GameTime`, `InputHandler`, `ItemsLibrary`, `PhotoGallery`, `Player`, `Inventory` |
 
-#### `EventManager.cs`
+### AudioManager (`App/AudioManager.cs`)
+
 | Aspect | Detail |
 |--------|--------|
-| **Path** | `Assets/Scripts/App/Core/EventManager.cs` |
-| **Class** | `EventManager<T> : IEventManager where T : struct` |
-| **Purpose** | Generic type-safe event system. One EventManager instance per struct type T. |
-| **Methods** | `AddListener(Action<T>)`, `RemoveListener(Action<T>)`, `Broadcast(T)` |
-| **Threading** | Single-threaded; checks that `GameEvent.Pause` is not currently broadcasting before allowing nested broadcasts (avoids stack overflow) |
+| **Class** | `AudioManager : MonoBehaviour` |
+| **Purpose** | Music playback via named `SoundPack` dictionary. |
+| **Fields** | `_musicSource`, `_audioSettings`, `_packs` (List<SoundPack>) |
+| **Methods** | `Initialize()`, `PlaySound(name)`, `StopSound()`, `PauseSound()`, `ResumeSound()`, `SetMasterVolume(float)`, `SetMusicVolume(float)`, `SetSFXVolume(float)` |
+| **Helper** | `SoundPack` — `Name`, `AudioClip`, `Loop` |
 
-#### `AutoEventBehaviour.cs`
+### ClientSettings (`App/ClientSettings.cs`)
+
 | Aspect | Detail |
 |--------|--------|
-| **Path** | `Assets/Scripts/App/Core/AutoEventBehaviour.cs` |
-| **Class** | `AutoEventBehaviour : MonoBehaviour` |
-| **Purpose** | Abstract base. On Enable subscribes to events via AutoEventProvider; OnDisable unsubscribes. |
-| **Methods** | `OnEnable()` — subscribe; `OnDisable()` — unsubscribe |
+| **Class** | `ClientSettings [Serializable]` |
+| **Purpose** | Persistent settings container. JSON save/load via Newtonsoft. |
+| **Sub-classes** | `GameSettings` (MouseSensitivity, TextSpeed, Subtitles), `GraphicsSettings` (ScreenMode, ResolutionWidth/Height, Brightness, VSync), `AudioSettings` (MasterVolume, MusicVolume, SFXVolume) |
+| **Methods** | `Save()`, `Load()`, `Clone()`, `CopyFrom()`, `EqualsTo()` |
 
-#### `AutoEventProvider.cs`
+### GraphicsManager (`App/GraphicsManager.cs`)
+
 | Aspect | Detail |
 |--------|--------|
-| **Path** | `Assets/Scripts/App/Core/AutoEventProvider.cs` |
-| **Class** | `AutoEventProvider` (static) |
-| **Purpose** | Uses reflection at startup to find all listener methods in AutoEventBehaviour subclasses and generates AddListener/RemoveListener delegates. |
-| **Methods** | `StartProvider(MonoBehaviour)`, `StopProvider(MonoBehaviour)` |
+| **Class** | `GraphicsManager : MonoBehaviour` |
+| **Purpose** | Display settings control: screen mode, resolution, VSync, brightness via URP ColorAdjustments. |
+| **Methods** | `Initialize()`, `ApplyAll()`, `ApplyScreenMode(FullScreenMode)`, `ApplyResolution(int, int)`, `ApplyVSync(bool)`, `ApplyBrightness(float)` |
 
-#### `CoroutineManager.cs`
+### GameTime (`App/GameTime.cs`)
+
 | Aspect | Detail |
 |--------|--------|
-| **Path** | `Assets/Scripts/App/Core/CoroutineManager.cs` |
-| **Class** | `CoroutineManager : MonoBehaviour` |
-| **Purpose** | Singleton MonoBehaviour that owns all coroutines. Allows non-MonoBehaviour classes to start/stop coroutines. |
-| **Methods** | `Awake()` — singleton; `StartCoroutine(IEnumerator)`, `StopCoroutine(Coroutine)` |
+| **Class** | `GameTime [Serializable]` |
+| **Namespace** | `Scripts.App` |
+| **Purpose** | Decoupled delta-time tracker. Updated each frame by external system. |
+| **Properties** | `Time` (total elapsed), `DeltaTime` (last frame) |
+| **Methods** | `Update(float deltaTime)`, `Reset()` |
 
-#### `GameLoader.cs`
+### InputHandler (`App/InputHandler.cs`)
+
 | Aspect | Detail |
 |--------|--------|
-| **Path** | `Assets/Scripts/App/Core/GameLoader.cs` |
-| **Class** | `GameLoader : MonoBehaviour` |
-| **Purpose** | Manages scene loading with loading screen. Listens to `GameEvent.LoadNextScene`. |
-| **Fields** | `_loadingScreen : GameObject` |
-| **Methods** | `Awake()` — subscribe; `OnDestroy()` — unsubscribe; `OnLoadNextScene(GameEvent.LoadNextScene)` — activates loading screen, loads scene asynchronously via SceneManager.LoadSceneAsync |
+| **Class** | `InputHandler : MonoBehaviour` |
+| **Namespace** | `Scripts.App` |
+| **Purpose** | Central input hub. Wraps auto-generated `InputSystemActions` and exposes C# events. |
+| **Properties** | `EnablePlayer`, `EnableUI`, `EnableGame` — toggle action maps at runtime |
+| **Events** | `OnMove(Vector2)`, `OnLook(Vector2)`, `OnInteract`, `OnCrouchStart/Stop`, `OnSprintStart/Stop`, `OnFlashlight`, `OnAction`, `OnExtraAction`, `OnSubmit`, `OnCancel`, `OnNext`, `OnPrevious`, `OnPause`, `OnInventory` |
 
-#### `SceneController.cs`
+### InputSystemActions (`App/InputSystemActions.cs`)
+
 | Aspect | Detail |
 |--------|--------|
-| **Path** | `Assets/Scripts/App/Core/SceneController.cs` |
-| **Class** | `SceneController : MonoBehaviour` |
-| **Purpose** | Handles transitions between game scenes. Provides fade-in/fade-out effects. |
-| **Methods** | `FadeIn(float duration)`, `FadeOut(float duration)`, `LoadScene(string name)` |
+| **Class** | `InputSystemActions : IInputActionCollection2, IDisposable` (auto-generated) |
+| **Purpose** | Auto-generated wrapper for `.inputactions` asset. |
+| **Action Maps** | **Player**: Move, Look, Interact, Crouch, Sprint, Flashlight, Action, ExtraAction, Inventory. **UI**: Submit, Cancel, Next, Previous. **Game**: Pause |
+| **Interfaces** | `IPlayerActions`, `IUIActions`, `IGameActions` |
 
----
+### Constants (`App/Constants/WindowConstants.cs`)
 
-### App.Constants
-
-#### `Constants.cs`
 | Aspect | Detail |
 |--------|--------|
-| **Path** | `Assets/Scripts/App/Constants/Constants.cs` |
 | **Class** | `Constants` (static partial) |
-| **Purpose** | Centralized constant storage. Split across multiple files via `partial`. |
+| **Namespace** | `Scripts.App.Constants` |
+| **Constants** | `MainMenuWindow`, `SettingsPopUp`, `InventoryWindow`, `PauseWindow`, `PlayerGUI`, `SaveWindow`, `LoadingWindow`, `DialogWindow`, `GalleryWindow` |
+| **Property** | `AllWindows` — `IReadOnlyList<string>` of all nine window name constants |
 
-#### `Constants.Settings.cs`
+### DialogIDProvider (`App/ValueProvider/DialogIDProvider.cs`)
+
 | Aspect | Detail |
 |--------|--------|
-| **Path** | `Assets/Scripts/App/Constants/Constants.Settings.cs` |
-| **Class** | `Constants` (partial) |
-| **Constants** | `AUTHOR`, `VERSION`, `SETTINGS_FILE_NAME`, `SAVES_FOLDER_NAME`, `SAVES_FILE_FORMAT` |
-
-#### `Constants.AudioMixer.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/App/Constants/Constants.AudioMixer.cs` |
-| **Class** | `Constants` (partial) |
-| **Constants** | `MASTER_VOLUME`, `MUSIC_VOLUME`, `SFX_VOLUME`, `UI_VOLUME`, ambient volume parameter names for the Audio Mixer |
-
-#### `Constants.Data.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/App/Constants/Constants.Data.cs` |
-| **Class** | `Constants` (partial) |
-| **Constants** | `ENCRYPTION_KEY` (string), `ENCRYPTION_IV` (string) — used for save file obfuscation |
-
-#### `Constants.Paths.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/App/Constants/Constants.Paths.cs` |
-| **Class** | `Constants` (partial) |
-| **Constants** | `SAVES_PATH` (combines Application.persistentDataPath + saves folder) |
-
-#### `WindowConstants.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/App/Constants/WindowConstants.cs` |
-| **Class** | `Constants` (partial) |
-| **Constants** | All window name strings (e.g. `MAIN_MENU`, `HUD`, `INVENTORY`, `PHOTO_GALLERY`, `SETTINGS`, `PAUSE`) and `AllWindows` (List<string>) |
-
----
-
-### App.Data
-
-#### `GameData.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/App/Data/GameData.cs` |
-| **Class** | `GameData` |
-| **Purpose** | Serializable container for all persistent game state. Lives in a single root object that is JSON-serialized to disk. |
-| **Fields** | `PlayerData` (PlayerData), `InventoryData` (List<ItemData>), `WorldState` (Dictionary<string, bool>), `StoryProgress` (List<string>), `PhotoData` (List<PhotoData>), `SettingsData` (SettingsData), `LastSaveTime` (DateTime) |
-
-#### `SavesData.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/App/Data/SavesData.cs` |
-| **Class** | `SavesData` |
-| **Purpose** | Metadata container listing all save slots. Used by save/load UI. |
-| **Fields** | `Saves : List<SaveFile>` |
-
-#### `SaveFile.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/App/Data/SaveFile.cs` |
-| **Class** | `SaveFile` |
-| **Purpose** | Metadata for a single save slot. |
-| **Fields** | `Name` (string), `Scene` (string), `DateTime` (string), `PlayTime` (string) |
-
----
-
-### App.Systems
-
-#### `SaveSystem.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/App/Systems/SaveSystem.cs` |
-| **Class** | `SaveSystem : MonoBehaviour` |
-| **Purpose** | Manages save/load lifecycle. Coordinates between save UI and data serialization. |
-| **Fields** | `_registeredComponents : List<ISaveableComponent>` |
-| **Methods** | `Save(string slot)` — iterate all registered components, collect their data, serialize to JSON, encrypt, write to file; `Load(string slot)` — read file, decrypt, deserialize, restore each component; `Delete(string slot)`; `HasSave(string slot)`; `RegisterComponent(ISaveableComponent)`; `UnregisterComponent(ISaveableComponent)`; `GetAllSaves()` — scan saves directory |
-
-#### `SaveSystem.Interfaces.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/App/Systems/SaveSystem.Interfaces.cs` |
-| **Interface** | `ISaveableComponent` |
-| **Methods** | `SaveData SaveState()`, `LoadState(SaveData data)` |
-
-#### `SaveSystem.Data.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/App/Systems/SaveSystem.Data.cs` |
-| **Class** | `SaveData` |
-| **Purpose** | Base class for component-specific save data blobs |
-
-#### `Localization.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/App/Systems/Localization.cs` |
-| **Class** | `Localization : MonoBehaviour` |
-| **Purpose** | Manages multilingual text. Loads CSV/JSON locale files and provides string lookup. |
-| **Fields** | `_locale : string` (current language code), `_strings : Dictionary<string, string>` |
-| **Methods** | `SetLocale(string code)` — load and switch language; `GetString(string key)` — lookup localized string; `Reload()` — re-parse locale file; `AddListener(Action)`, `RemoveListener(Action)` — notify UI of locale change |
-
-#### `AudioManager.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/App/Systems/AudioManager.cs` |
-| **Class** | `AudioManager : AutoEventBehaviour` |
-| **Purpose** | Controls all audio: SFX, music, ambient, UI sounds. Uses Unity Audio Mixer groups. |
-| **Listeners** | `On(GameEvent.AddItem)` — play pickup sound |
-| **Methods** | `PlaySFX(AudioClip clip, float volume)`; `PlayMusic(AudioClip clip, bool loop)`; `PlayAmbient(AudioClip clip)`; `SetMasterVolume(float)`; `SetMusicVolume(float)`; `SetSFXVolume(float)`; `PlayUISound(AudioClip)` |
-
-#### `GameManager.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/App/Systems/GameManager.cs` |
-| **Class** | `GameManager : AutoEventBehaviour` |
-| **Purpose** | Central game state controller. Tracks game phase (menu, playing, paused, cutscene). |
-| **Fields** | `State : GameState` (enum: Menu, Playing, Paused, Cutscene) |
-| **Listeners** | `On(GameEvent.LoadNextScene)` — start game; `On(UIEvents.QuitGame)` — quit; `On(UIEvents.StartNewGame)` — reset state; `On(UIEvents.ExitToMainMenu)` — return to menu |
-| **Methods** | `Pause()`, `Resume()`, `TogglePause()` |
-
-#### `InputManager.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/App/Systems/InputManager.cs` |
-| **Class** | `InputManager : MonoBehaviour` |
-| **Purpose** | Wraps Unity Input System. Exposes action maps and provides per-frame input state. |
-| **Fields** | `_inputActions : InputSystemActions`, `_playerMap`, `_uiMap`, `_gameMap` |
-| **Methods** | `GetMove() : Vector2`; `GetLook() : Vector2`; `IsInteractPressed() : bool`; `IsCrouchHeld() : bool`; `IsSprintHeld() : bool`; `IsFlashlightPressed() : bool`; `IsActionPressed() : bool`; `IsExtraActionPressed() : bool`; `IsInventoryPressed() : bool`; `IsPausePressed() : bool`; `IsSubmitPressed() : bool`; `IsCancelPressed() : bool` |
-| **Events** | Fires `InputEvent.OnInteract`, `InputEvent.OnCrouch`, `InputEvent.OnSprint`, `InputEvent.OnFlashlight`, `InputEvent.OnAction`, `InputEvent.OnInventory`, `InputEvent.OnPause` |
-
-#### `InputSystemActions.cs` (auto-generated)
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/App/InputSystemActions.cs` |
-| **Class** | `InputSystemActions : IInputActionCollection2, IDisposable` (partial, auto-generated) |
-| **Defines** | 3 action maps: **Player** (Move, Look, Interact, Crouch, Sprint, Flashlight, Action, ExtraAction, Inventory), **UI** (Submit, Cancel, Next, Previous), **Game** (Pause) |
-| **Interfaces** | `IPlayerActions`, `IUIActions`, `IGameActions` with per-action callback methods |
-
----
-
-### App.ValueProvider
-
-#### `DialogIDProvider.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/App/ValueProvider/DialogIDProvider.cs` |
 | **Class** | `DialogIDProvider` (static) |
-| **Purpose** | Editor-only. Provides dropdown values for dialog node IDs and choice IDs in the Inspector. |
-| **Methods** | `GetAllNodeIds()`, `GetAllChoiceIds()` — both use `AssetDatabase.FindAssets` to find all DialogNode assets and yield dropdown items |
+| **Namespace** | `Scripts.App.ValueProvider` |
+| **Purpose** | Editor-only. Provides `[ValueDropdown]` items for `DialogNode` IDs and choice IDs via `AssetDatabase.FindAssets`. |
 
 ---
 
-## Scripts.Events
+## Events System
 
-All event classes follow the same pattern: a `static` class containing one or more `struct` definitions. Each struct is a message type for `EventManager<T>`.
+All event types in `Scripts.Events`. Each is a non-static class containing struct message types for `EventManager<T>`.
 
-### GameEvent (`Scripts.Events.Game`)
-
-| Struct | Fields | Purpose |
-|--------|--------|---------|
-| `GameEvent.Pause` | *(empty)* | Toggle game pause |
-| `GameEvent.InteractHover` | `Interact : Interactable` | Player looking at an interactable |
-| `GameEvent.InteractHoverEnd` | `Interact : Interactable` | Player stopped looking at interactable |
-| `GameEvent.AddItem` | `Id : int`, `Amount : int` | Item added to inventory |
-| `GameEvent.InnerDialogue` | `Text : string` | Show inner monologue text |
-| `GameEvent.LoadNextScene` | *(empty)* | Transition to next scene |
-| `GameEvent.OnPlayerItemEquip` | `UsableItem : UsableItem` | Player equipped an item |
-| `GameEvent.OnPlayerItemUnEquip` | *(empty)* | Player unequipped current item |
-| `GameEvent.OnGallery` | *(empty)* | Open photo gallery |
-
-### DialogEvent (`Scripts.Events.Game`)
+### GameEvent (`Events/Game/GameEvent.cs`)
 
 | Struct | Fields | Purpose |
 |--------|--------|---------|
-| `DialogEvent.OpenDialog` | `NodeID : string` | Open dialog at given Yarn node |
-| `DialogEvent.OnChoice` | `ChoiceID : string` | Player selected a dialog choice |
-| `DialogEvent.CloseDialog` | *(empty)* | Close dialog panel |
+| `Pause` | — | Toggle game pause |
+| `InteractHover` | `Interactable Interact` | Player looking at an interactable |
+| `InteractHoverEnd` | `Interactable Interact` | Player stopped looking at interactable |
+| `AddItem` | `int Id`, `int Amount` | Item added to inventory |
+| `InnerDialogue` | `string Text` | Show inner monologue |
+| `LoadNextScene` | — | Transition to next scene |
+| `OnPlayerItemEquip` | `UsableItem UsableItem` | Player equipped an item |
+| `OnPlayerItemUnEquip` | — | Player unequipped |
+| `OnGallery` | — | Open photo gallery |
 
-### PlayerEvent (`Scripts.Events.Game`)
-
-| Struct | Fields | Purpose |
-|--------|--------|---------|
-| `PlayerEvent.OnTakeDamage` | `Damage : float` | Player took damage |
-| `PlayerEvent.OnHeal` | `Health : float` | Player healed |
-| `PlayerEvent.OnDie` | *(empty)* | Player died |
-| `PlayerEvent.OnSit` | *(empty)* | Player sat down |
-| `PlayerEvent.OnStandUp` | *(empty)* | Player stood up |
-| `PlayerEvent.OnHide` | *(empty)* | Player entered hiding spot |
-| `PlayerEvent.OnExitHide` | *(empty)* | Player left hiding spot |
-| `PlayerEvent.OnCrouch` | `IsCrouching : bool` | Crouch state changed |
-| `PlayerEvent.OnSprint` | `IsSprinting : bool` | Sprint state changed |
-| `PlayerEvent.OnDoorOpen` | *(empty)* | Player opened a door |
-| `PlayerEvent.OnSetLevel` | *(empty)* | Player changed floor/level |
-
-### StoryEvent (`Scripts.Events.Story`)
+### DialogEvent (`Events/Game/DialogEvent.cs`)
 
 | Struct | Fields | Purpose |
 |--------|--------|---------|
-| `StoryEvent.OnStoryBeat` | `ID : string` | Story beat triggered |
-| `StoryEvent.OnStoryProgress` | `ID : string` | Story progressed to milestone |
-| `StoryEvent.OnDialogue` | `Text : string`, `Speaker : string` | Show dialogue line |
-| `StoryEvent.OnEnding` | `EndingType : int` | Game ending triggered |
+| `OpenDialog` | `string NodeID` | Open dialog at node |
+| `OnChoice` | `string ChoiceID` | Player selected a choice |
+| `CloseDialog` | — | Close dialog |
 
-### InputEvent (`Scripts.Events.Input`)
-
-| Struct | Fields | Purpose |
-|--------|--------|---------|
-| `InputEvent.OnInteract` | *(empty)* | Interact button pressed |
-| `InputEvent.OnCrouch` | *(empty)* | Crouch toggled |
-| `InputEvent.OnSprint` | *(empty)* | Sprint toggled |
-| `InputEvent.OnFlashlight` | *(empty)* | Flashlight toggled |
-| `InputEvent.OnAction` | *(empty)* | Action button pressed |
-| `InputEvent.OnInventory` | *(empty)* | Inventory toggled |
-| `InputEvent.OnPause` | *(empty)* | Pause pressed |
-
-### InventoryEvent (`Scripts.Events.Inventory`)
+### UIEvents (`Events/UI/UIEvents.cs`)
 
 | Struct | Fields | Purpose |
 |--------|--------|---------|
-| `InventoryEvent.OnItemAdded` | `Item : InventoryItem`, `Count : int` | Item added |
-| `InventoryEvent.OnItemRemoved` | `Item : InventoryItem`, `Count : int` | Item removed |
-| `InventoryEvent.OnItemUsed` | `Item : InventoryItem` | Item used |
-| `InventoryEvent.OnInventoryOpened` | *(empty)* | Inventory UI opened |
-| `InventoryEvent.OnInventoryClosed` | *(empty)* | Inventory UI closed |
+| `OpenWindow` | `string Name` | Open window by name |
+| `OpenWindowWithContext` | `string Name`, `object Context` | Open window with data |
+| `CloseWindow` | `string Name` | Close specific window |
+| `CloseLastWindow` | — | Close top window |
+| `QuitGame` | — | Exit application |
+| `StartNewGame` | — | Start new game |
+| `ExitToMainMenu` | — | Return to main menu |
 
-### UIEvents (`Scripts.Events.UI`)
-
-| Struct | Fields | Purpose |
-|--------|--------|---------|
-| `UIEvents.OpenWindow` | `Name : string` | Open window by name |
-| `UIEvents.OpenWindowWithContext` | `Name : string`, `Context : object` | Open window with data |
-| `UIEvents.CloseWindow` | `Name : string` | Close specific window |
-| `UIEvents.CloseLastWindow` | *(empty)* | Close top window |
-| `UIEvents.QuitGame` | *(empty)* | Exit application |
-| `UIEvents.StartNewGame` | *(empty)* | Start new game |
-| `UIEvents.ExitToMainMenu` | *(empty)* | Return to main menu |
-
-### PreviewEvent (`Scripts.Events.Preview`)
+### PreviewEvent (`Events/Preview/PreviewEvent.cs`)
 
 | Struct | Fields | Purpose |
 |--------|--------|---------|
-| `PreviewEvent.Drag` | `Delta : Vector2` | Drag model in preview |
-| `PreviewEvent.ShowNext` | `NextModel : Transform`, `Scale : Vector3` | Show next model variant |
-| `PreviewEvent.ShowPrevious` | `PreviousModel : Transform`, `Scale : Vector3` | Show previous model variant |
-| `PreviewEvent.Show` | `Model : Transform`, `Scale : Vector3` | Show specific model |
+| `Drag` | `Vector2 Delta` | Drag model in preview |
+| `ShowNext` | `Transform NextModel`, `Vector3 Scale` | Show next model variant |
+| `ShowPrevious` | `Transform PreviousModel`, `Vector3 Scale` | Show previous variant |
+| `Show` | `Transform Model`, `Vector3 Scale` | Show specific model |
 
-### JournalEvent (`Scripts.Events.Journal`)
-
-| Struct | Fields | Purpose |
-|--------|--------|---------|
-| `JournalEvent.OnNoteAdded` | `Data : NoteData` | Note/document added |
-| `JournalEvent.OnJournalOpened` | *(empty)* | Journal UI opened |
-| `JournalEvent.OnJournalClosed` | *(empty)* | Journal UI closed |
-
-### SettingsEvent (`Scripts.Events.Settings`)
+### AppEvents (`Events/App/AppEvents.cs`)
 
 | Struct | Fields | Purpose |
 |--------|--------|---------|
-| `SettingsEvent.OnVolumeChanged` | `Type : string`, `Value : float` | Volume setting changed |
-| `SettingsEvent.OnQualityChanged` | `Level : int` | Graphics quality changed |
-| `SettingsEvent.OnControlsChanged` | *(empty)* | Control bindings changed |
-
-### CutsceneEvent (`Scripts.Events.Cutscene`)
-
-| Struct | Fields | Purpose |
-|--------|--------|---------|
-| `CutsceneEvent.OnCutsceneStart` | `ID : string` | Cutscene started |
-| `CutsceneEvent.OnCutsceneEnd` | `ID : string` | Cutscene ended |
-
-### SaveEvent (`Scripts.Events.Save`)
-
-| Struct | Fields | Purpose |
-|--------|--------|---------|
-| `SaveEvent.OnSave` | `Slot : string` | Game saved |
-| `SaveEvent.OnLoad` | `Slot : string` | Game loaded |
-| `SaveEvent.OnDelete` | `Slot : string` | Save deleted |
-
-### FlashlightEvent (`Scripts.Events.Flashlight`)
-
-| Struct | Fields | Purpose |
-|--------|--------|---------|
-| `FlashlightEvent.OnFlashlightEnabled` | *(empty)* | Flashlight turned on |
-| `FlashlightEvent.OnFlashlightDisabled` | *(empty)* | Flashlight turned off |
-| `FlashlightEvent.OnFlashlightBatteryLow` | *(empty)* | Battery low warning |
-| `FlashlightEvent.OnFlashlightBatteryDead` | *(empty)* | Battery depleted |
-
-### StaminaEvent (`Scripts.Events.Game`)
-
-| Struct | Fields | Purpose |
-|--------|--------|---------|
-| `StaminaEvent.OnStaminaChanged` | `Value : float`, `MaxValue : float` | Stamina value changed |
-| `StaminaEvent.OnStaminaExhausted` | *(empty)* | Stamina fully depleted |
-| `StaminaEvent.OnStaminaRecovered` | *(empty)* | Stamina fully recovered |
-
-### SanityEvent (`Scripts.Events.Game`)
-
-| Struct | Fields | Purpose |
-|--------|--------|---------|
-| `SanityEvent.OnSanityChanged` | `Value : float`, `MaxValue : float` | Sanity changed |
-| `SanityEvent.OnSanityCritical` | *(empty)* | Sanity critically low |
-| `SanityEvent.OnSanityRestored` | *(empty)* | Sanity fully restored |
-| `SanityEvent.OnHallucination` | *(empty)* | Hallucination effect triggered |
-
-### TutorialEvent (`Scripts.Events.Tutorial`)
-
-| Struct | Fields | Purpose |
-|--------|--------|---------|
-| `TutorialEvent.OnTutorialShow` | `ID : string` | Show tutorial hint |
-| `TutorialEvent.OnTutorialHide` | `ID : string` | Hide tutorial hint |
-
-### PhotoEvents (`Scripts.Events.Photo`)
-
-| Struct | Fields | Purpose |
-|--------|--------|---------|
-| `PhotoEvents.OnPhotoTaken` | `PhotoSprite : Sprite` | Photo captured |
-| `PhotoEvents.OnPhotoSaved` | `PhotoID : int` | Photo saved to gallery |
-| `PhotoEvents.OnPhotoDeleted` | `PhotoID : int` | Photo deleted from gallery |
+| `Save` | `int Slot` | Save game to slot |
+| `Load` | `int Slot` | Load game from slot |
+| `StartSceneSwitching` | — | Scene transition started |
 
 ---
 
-## Scripts.Game
+## Game Layer
 
-### Game.Items
+### GameManager (`Game/GameManager.cs`)
 
-#### `Item.cs`
 | Aspect | Detail |
 |--------|--------|
-| **Path** | `Assets/Scripts/Game/Items/Item.cs` |
-| **Class** | `Item : ScriptableObject` |
-| **Purpose** | Base class for all item definitions. ScriptableObject so every item is an asset. |
-| **Fields** | `ID : int`, `Name : string`, `Description : string`, `Icon : Sprite`, `Weight : float`, `MaxStack : int`, `IsUsable : bool` |
-| **Methods** | `Use()` — virtual, override in subclasses |
+| **Class** | `GameManager : MonoBehaviour` |
+| **Namespace** | `Scripts.Game` |
+| **Purpose** | Central game loop. Subscribes to input/game events, manages pause, opens/closes UI windows. |
+| **Fields** | `_cameraController`, `_player`, `_isPaused`, `_gameTime`, `_currentInteractable` |
+| **Methods** | `Start()` — subscribe to events (OnPause, OnInventory, OnInteract, Pause, InteractHover, AddItem, OnGallery, OpenDialog, CloseDialog), open PlayerGUI. `OnPause()` — toggle pause. `OnInventory()` — show inventory. `OnInteract()` — interact with current. `OnOpenDialog/OnCloseDialog()` — dialog lifecycle. |
 
-#### `InventoryItem.cs`
+### CameraController (`Game/CameraController.cs`)
+
 | Aspect | Detail |
 |--------|--------|
-| **Path** | `Assets/Scripts/Game/Items/InventoryItem.cs` |
-| **Class** | `InventoryItem : Item` |
-| **Purpose** | Item that can be picked up and stored in inventory. |
-| **Fields** | *(inherits from Item)* |
-| **Methods** | *(inherits)* |
+| **Class** | `CameraController : MonoBehaviour` |
+| **Purpose** | First-person camera: mouse look, head bob, interaction raycast, cursor management. |
+| **Fields** | `_camera`, `_body`, `_playerCollider`, `_bodyMaxHeight`, `_cameraHeightOffset`, `_interactionDistance`, `_interactionsLayers`, `_amplitude`, `_frequency`, `_bobTimer` |
+| **Methods** | `OnLook(Vector2)` — apply rotation with clamp (-80 to 80), `CheckInteractableHover()` — raycast center screen for `Interactable`, `UpdateCameraHeight()` — head bob + collider height following, `SetMouseLock(bool)` |
 
-#### `UsableItem.cs`
+### Interactable (`Game/Interactable.cs`)
+
 | Aspect | Detail |
 |--------|--------|
-| **Path** | `Assets/Scripts/Game/Items/UsableItem.cs` |
-| **Class** | `UsableItem : InventoryItem` |
-| **Purpose** | Item with a specific use action (key, medkit, battery, etc.). |
-| **Fields** | `UseEffect : ItemEffect` (ScriptableObject), `UseSound : AudioClip`, `DestroyOnUse : bool` |
-| **Methods** | `Use()` — apply UseEffect, play sound, optionally consume item |
+| **Class** | `Interactable : MonoBehaviour` (abstract) |
+| **Namespace** | `Scripts.Game` |
+| **Abstract** | `string InteractDescription { get; }`, `void Interact()` |
 
-#### `StoryItem.cs`
+### PlayerMoveSystem (`Game/PlayerMoveSystem.cs`)
+
 | Aspect | Detail |
 |--------|--------|
-| **Path** | `Assets/Scripts/Game/Items/StoryItem.cs` |
-| **Class** | `StoryItem : InventoryItem` |
-| **Purpose** | Plot-relevant item (keycard, document, photo). Cannot be discarded. |
-| **Fields** | `StoryID : string` — unique identifier for story tracking |
-| **Methods** | `Use()` — fire `StoryEvent.OnStoryBeat` with StoryID |
+| **Class** | `PlayerMoveSystem : MonoBehaviour` |
+| **Namespace** | `Scripts.Game` |
+| **Purpose** | Walk, sprint, crouch with DOTween height transitions, step sounds, ceiling detection. |
+| **Fields** | `_rigidbody`, `_collider`, `_model`, `_walkSpeed`, `_sprintSpeed`, `_crouchSpeed`, `_standHeight`, `_crouchHeight`, `_crouchDuration`, `_ceilingMask` |
+| **Methods** | `ApplyMovement()`, `ApplyCrouch()`, `CeilingAbove()`, `GetCurrentSpeed()`, `HandleSteps()` |
+| **Properties** | `IsSprinting`, `IsCrouching`, `IsMoving` |
 
-#### `EquipSlot.cs`
+### ColliderDetector (`Game/ColliderDetector.cs`)
+
 | Aspect | Detail |
 |--------|--------|
-| **Path** | `Assets/Scripts/Game/Items/EquipSlot.cs` |
-| **Enum** | `EquipSlot` |
-| **Values** | `None`, `Head`, `Torso`, `Hand`, `Tool`, `LightSource` |
+| **Class** | `ColliderDetector : MonoBehaviour` |
+| **Namespace** | `Scripts.Game` |
+| **Purpose** | Forwards Unity collision/trigger callbacks as C# events. |
+| **Events** | `CollisionEnter`, `CollisionExit`, `TriggerEnter`, `TriggerExit` |
 
-#### `IItemContainer.cs`
+### Player (`Game/Player/Player.cs`)
+
 | Aspect | Detail |
 |--------|--------|
-| **Path** | `Assets/Scripts/Game/Items/IItemContainer.cs` |
-| **Interface** | `IItemContainer` |
-| **Methods** | `CanAddItem(Item, int) : bool`, `AddItem(Item, int)`, `RemoveItem(Item, int)`, `GetItemCount(Item) : int`, `ContainsItem(Item) : bool`, `Clear()` |
+| **Class** | `Player : MonoBehaviour` |
+| **Namespace** | `Scripts.Game` |
+| **Purpose** | Player entity. Holds inventory, manages equipped item, forwards use/alt-use input. |
+| **Fields** | `_inventory`, `_currentItem (UsableItem)` |
+| **Methods** | `OnAction()` — call `_currentItem.Use()`. `OnExtraAction()` — call `_currentItem.AltUse()`. `SetInventory(Inventory)`. |
+| **Properties** | `Inventory` |
 
-#### `ItemDatabase.cs`
+### Inventory (`Game/Player/Inventory.cs`)
+
 | Aspect | Detail |
 |--------|--------|
-| **Path** | `Assets/Scripts/Game/Items/ItemDatabase.cs` |
-| **Class** | `ItemDatabase : MonoBehaviour` |
-| **Purpose** | Runtime registry of all `Item` ScriptableObjects. Provides lookup by ID. |
-| **Fields** | `_items : List<Item>` (assigned in Inspector) |
-| **Methods** | `GetItemByID(int) : Item`; `GetItemByName(string) : Item`; `GetAllItems() : List<Item>` |
+| **Class** | `Inventory` (plain class) |
+| **Purpose** | Serializable item list. Items stored as `InventoryItem` (id + amount). |
+| **Methods** | `AddItem(int id, int amount)`, `RemoveItem(int id, int amount)` |
+| **Properties** | `Items` (IReadOnlyList) |
 
-### Game.Player
+### Flashlight (`Game/Player/Flashlight.cs`)
 
-#### `PlayerController.cs`
 | Aspect | Detail |
 |--------|--------|
-| **Path** | `Assets/Scripts/Game/Player/PlayerController.cs` |
-| **Class** | `PlayerController : AutoEventBehaviour` |
-| **Purpose** | Top-level player coordinator. Holds references to all player subsystems and delegates to them. |
-| **Fields** | `Movement : PlayerMovement`, `Camera : PlayerCamera`, `Interaction : PlayerInteraction`, `Stamina : StaminaSystem`, `Flashlight : FlashlightSystem`, `Sanity : SanitySystem`, `Inventory : PlayerInventory`, `Photo : PhotoSystem` |
-| **Listeners** | `On(UIEvents.OpenWindow)` — disable control; `On(UIEvents.CloseLastWindow)` — enable control |
-| **Methods** | `Awake()` — find subsystems via GetComponent/GetComponentInChildren; `Update()` — delegate to subsystems |
+| **Class** | `Flashlight : MonoBehaviour` |
+| **Namespace** | `Scripts.Game` |
+| **Purpose** | Toggleable flashlight parented to camera. |
+| **Fields** | `_flashlight (Light)`, `_isFlashlightOn` |
+| **Methods** | `OnFlashlight()` — toggle on/off |
 
-#### `PlayerMovement.cs`
+### PhotoGallery (`Game/Player/PhotoGallery.cs`)
+
 | Aspect | Detail |
 |--------|--------|
-| **Path** | `Assets/Scripts/Game/Player/PlayerMovement.cs` |
-| **Class** | `PlayerMovement : MonoBehaviour` |
-| **Purpose** | Handles character movement: walking, sprinting, crouching. |
-| **Fields** | `_controller : CharacterController`, `_speed : float`, `_sprintMultiplier : float`, `_crouchSpeed : float`, `_crouchHeight : float`, `_gravity : float`, `_jumpForce : float`, `_inputManager : InputManager` |
-| **Methods** | `Update()` — read InputManager, apply movement; `Crouch(bool)`, `Sprint(bool)`; `IsGrounded() : bool` |
-| **Fires** | `PlayerEvent.OnCrouch`, `PlayerEvent.OnSprint` |
+| **Class** | `PhotoGallery` (plain class) |
+| **Namespace** | `Scripts.Game` |
+| **Purpose** | Stores photos as base64 strings (serialization) and Sprites (UI). |
+| **Methods** | `Add(Texture2D)`, `SetPhotos(List<string>)` |
+| **Properties** | `Photos`, `PhotosBase64` |
 
-#### `PlayerCamera.cs`
+### Items / Item (`Game/Items/Item.cs`)
+
 | Aspect | Detail |
 |--------|--------|
-| **Path** | `Assets/Scripts/Game/Player/PlayerCamera.cs` |
-| **Class** | `PlayerCamera : MonoBehaviour` |
-| **Purpose** | First-person camera with mouse look. Optional head bob and weapon sway. |
-| **Fields** | `_camera : Camera`, `_sensitivity : Vector2`, `_xRotation : float`, `_yRotation : float`, `_headBob : bool`, `_headBobSpeed : float`, `_headBobAmount : float` |
-| **Methods** | `Update()` — read InputManager.GetLook(), apply rotation; `SetSensitivity(float)`, `SetFOV(float, bool)` |
+| **Class** | `Item` (plain class) |
+| **Namespace** | `Scripts.Game.Items` |
+| **Fields** | `Id`, `Name`, `Description`, `Model (Transform)`, `PreviewScale (Vector3)` |
 
-#### `PlayerInteraction.cs`
+### ItemsLibrary (`Game/Items/ItemsLibrary.cs`)
+
 | Aspect | Detail |
 |--------|--------|
-| **Path** | `Assets/Scripts/Game/Player/PlayerInteraction.cs` |
-| **Class** | `PlayerInteraction : MonoBehaviour` |
-| **Purpose** | Raycast-based interaction detection. Shoots a ray from camera center to find `Interactable` objects. |
-| **Fields** | `_interactRange : float`, `_camera : Camera`, `_currentInteractable : Interactable` |
-| **Methods** | `Update()` — raycast, track hover state, fire events; `Interact()` — call `_currentInteractable.Interact()` |
-| **Fires** | `GameEvent.InteractHover`, `GameEvent.InteractHoverEnd` |
+| **Class** | `ItemsLibrary : ScriptableObject` |
+| **Namespace** | `Scripts.Game.Items` |
+| **Purpose** | Central item registry. Maps ID to Item. |
+| **Methods** | `Initialize()`, `TryGetItem(int, out Item)` |
 
-#### `PlayerInventory.cs`
+### UsableItem (`Game/Items/UsableItem.cs`)
+
 | Aspect | Detail |
 |--------|--------|
-| **Path** | `Assets/Scripts/Game/Player/PlayerInventory.cs` |
-| **Class** | `PlayerInventory : MonoBehaviour, IItemContainer` |
-| **Purpose** | Manages player inventory — list of held items. |
-| **Fields** | `_items : List<InventoryItem>`, `_maxSlots : int`, `_equippedItem : UsableItem` |
-| **Methods** | `AddItem(Item, int)` — fire GameEvent.AddItem; `RemoveItem(Item, int)`; `HasItem(int id) : bool`; `GetItemCount(int) : int`; `Equip(UsableItem)` — fire GameEvent.OnPlayerItemEquip; `Unequip()`; `UseEquipped()` |
-| **Implements** | `IItemContainer` |
+| **Class** | `UsableItem : Item` (abstract) |
+| **Namespace** | `Scripts.Game.Items` |
+| **Abstract Methods** | `Initialize()`, `Pickup()`, `Unequipe()`, `Use()`, `AltUse()` |
+| **Abstract Properties** | `IsEquiped (bool)` |
 
-#### `PlayerHealth.cs`
+### PhotoCamera (`Game/Items/PhotoCamera.cs`)
+
 | Aspect | Detail |
 |--------|--------|
-| **Path** | `Assets/Scripts/Game/Player/PlayerHealth.cs` |
-| **Class** | `PlayerHealth : AutoEventBehaviour` |
-| **Purpose** | Player health pool with damage/heal/death handling. |
-| **Fields** | `_maxHealth : float`, `_currentHealth : float`, `_isDead : bool` |
-| **Listeners** | `On(PlayerEvent.OnTakeDamage)` — reduce health, check death; `On(PlayerEvent.OnHeal)` — restore health |
-| **Methods** | `TakeDamage(float)`, `Heal(float)`, `Die()` — fire PlayerEvent.OnDie, trigger death sequence |
-| **Fires** | `PlayerEvent.OnTakeDamage`, `PlayerEvent.OnDie` |
+| **Class** | `PhotoCamera : UsableItem` |
+| **Namespace** | `Scripts.Game.Items` |
+| **Purpose** | Camera item. Captures 512x512 photos from a child camera render texture. |
+| **Methods** | `Use()` — capture photo, add to `PhotoGallery`. `AltUse()` — fire `GameEvent.OnGallery` |
 
-### Game.Mechanics
+### PickableItem (`Game/Items/PickableItem.cs`)
 
-#### `StaminaSystem.cs`
 | Aspect | Detail |
 |--------|--------|
-| **Path** | `Assets/Scripts/Game/Mechanics/StaminaSystem.cs` |
-| **Class** | `StaminaSystem : AutoEventBehaviour` |
-| **Purpose** | Manages player stamina. Depletes while sprinting, recovers while idle/walking. |
-| **Fields** | `_maxStamina : float`, `_currentStamina : float`, `_drainRate : float`, `_recoverRate : float`, `_recoverDelay : float`, `_isExhausted : bool` |
-| **Listeners** | `On(PlayerEvent.OnSprint)` — start/stop drain |
-| **Methods** | `Update()` — tick stamina drain/recovery; `Exhaust()` — set exhausted flag, fire StaminaEvent.OnStaminaExhausted; `Recover()` — fire StaminaEvent.OnStaminaRecovered |
-| **Fires** | `StaminaEvent.OnStaminaChanged`, `StaminaEvent.OnStaminaExhausted`, `StaminaEvent.OnStaminaRecovered` |
+| **Class** | `PickableItem : Interactable` |
+| **Purpose** | World pickup object. Adds item to inventory, destroys self. |
+| **Fields** | `_id`, `_amount`, `_interactDescription` |
+| **Events** | `PickedUp` (used by `ItemPickedUp` trigger condition) |
 
-#### `SanitySystem.cs`
+### NPC / PatrolNPC (`Game/NPC/PatrolNPC.cs` + partials)
+
 | Aspect | Detail |
 |--------|--------|
-| **Path** | `Assets/Scripts/Game/Mechanics/SanitySystem.cs` |
-| **Class** | `SanitySystem : AutoEventBehaviour` |
-| **Purpose** | Player sanity mechanic. Decreases in darkness/near enemies/ witnessing events. Triggers hallucinations at critical levels. |
-| **Fields** | `_maxSanity : float`, `_currentSanity : float`, `_darkDrainRate : float`, `_enemyProximityDrain : float`, `_recoverRateInLight : float`, `_criticalThreshold : float`, `_isHallucinating : bool` |
-| **Listeners** | `On(SanityEvent.OnSanityChanged)` |
-| **Methods** | `Update()` — check environment, tick sanity; `TriggerHallucination()` — fire event, random hallucination effect |
-| **Fires** | `SanityEvent.OnSanityChanged`, `SanityEvent.OnSanityCritical`, `SanityEvent.OnHallucination` |
+| **Class** | `PatrolNPC : MonoBehaviour` (partial, 4 files) |
+| **Namespace** | `Scripts.Game.NPC` |
+| **Purpose** | Patrolling AI with 3 states: Patrol, Chase, Search. Uses NavMeshAgent + SplineContainer. |
+| **States** | **Patrol**: moves along spline path with configurable wait points. **Chase**: (stub). **Search**: (stub). |
+| **Methods** | `CanSeePlayer()` — distance + angle + line-of-sight check |
 
-#### `FlashlightSystem.cs`
+### Dialog / NPCDialog (`Game/Dialog/NPCDialog.cs`)
+
 | Aspect | Detail |
 |--------|--------|
-| **Path** | `Assets/Scripts/Game/Mechanics/FlashlightSystem.cs` |
-| **Class** | `FlashlightSystem : AutoEventBehaviour` |
-| **Purpose** | Player flashlight with battery drain. Can be toggled on/off. |
-| **Fields** | `_light : Light`, `_maxBattery : float`, `_currentBattery : float`, `_drainRate : float`, `_isOn : bool`, `_intensity : float`, `_range : float`, `_angle : float` |
-| **Methods** | `Toggle()` — on/off, fire events; `Update()` — if on, drain battery; `Recharge(float)` — restore battery |
-| **Fires** | `FlashlightEvent.OnFlashlightEnabled`, `FlashlightEvent.OnFlashlightDisabled`, `FlashlightEvent.OnFlashlightBatteryLow` |
+| **Class** | `NPCDialog : Interactable` |
+| **Namespace** | `Scripts.Game.Dialog` |
+| **Purpose** | NPC dialog trigger. Opens dialog tree at configurable start node. Subscribes to dialog events to track state. |
+| **Methods** | `Interact()` — fire `OpenDialog`. `SetStartNode(string)` — change dialog start node |
 
-#### `PhotoSystem.cs`
+### DialogSystem (`Game/Dialog/DialogSystem.cs`)
+
 | Aspect | Detail |
 |--------|--------|
-| **Path** | `Assets/Scripts/Game/Mechanics/PhotoSystem.cs` |
-| **Class** | `PhotoSystem : AutoEventBehaviour` |
-| **Purpose** | Photo capture mechanic. Player can take photos of the environment. Photos are stored in gallery. |
-| **Fields** | `_camera : Camera` (photo camera), `_photoResolution : Vector2Int`, `_maxPhotos : int`, `_photos : List<Sprite>` |
-| **Methods** | `TakePhoto()` — render camera to RenderTexture, capture to Sprite, fire PhotoEvents.OnPhotoTaken; `HasSpace() : bool`; `GetPhotos() : List<Sprite>` |
-| **Fires** | `PhotoEvents.OnPhotoTaken` |
+| **Class** | `DialogSystem` (plain class) |
+| **Namespace** | `Scripts.Game.Dialog` |
+| **Purpose** | Dialog data container. Builds dictionaries from node/choice lists. |
+| **Methods** | `Initialize()`, `TryGetNode(string, out DialogNode)`, `TryGetChoice(string, out DialogСhoice)` |
 
-#### `InteractionController.cs`
+### DialogNode (`Game/Dialog/DialogNode.cs`)
+
 | Aspect | Detail |
 |--------|--------|
-| **Path** | `Assets/Scripts/Game/Mechanics/InteractionController.cs` |
-| **Class** | `InteractionController : AutoEventBehaviour` |
-| **Purpose** | Handles Interact action from InputManager. Delegates to PlayerInteraction.Interact(). |
-| **Listeners** | `On(InputEvent.OnInteract)` — call `PlayerInteraction.Interact()` |
+| **Class** | `DialogNode : ScriptableObject` |
+| **Namespace** | `Scripts.Game.Dialog` |
+| **Fields** | `ID`, `Text`, `DialogСhoice` (List) |
 
-#### `TimerClock.cs`
+### DialogСhoice (`Game/Dialog/DialogСhoice.cs`)
+
 | Aspect | Detail |
 |--------|--------|
-| **Path** | `Assets/Scripts/Game/Mechanics/TimerClock.cs` |
-| **Class** | `TimerClock : MonoBehaviour` |
-| **Purpose** | In-game time tracking. Counts elapsed play time. |
-| **Fields** | `_elapsedTime : float` |
-| **Methods** | `Update()` — accumulate deltaTime; `GetElapsedTime() : TimeSpan`; `Reset()` |
-| **Editor** | `[ExecuteAlways]` — also runs in edit mode for testing |
+| **Class** | `DialogСhoice` (Cyrillic 'С') |
+| **Namespace** | `Scripts.Game.Dialog` |
+| **Fields** | `ID`, `Text`, `NextNodeID`, `NextIsStart`, `Actions` (List<IDialogAction>) |
 
-### Game.Enemies
+### IDialogAction (`Game/Dialog/DialogActions/IDialogAction.cs`)
 
-#### `EnemyBase.cs`
 | Aspect | Detail |
 |--------|--------|
-| **Path** | `Assets/Scripts/Game/Enemies/EnemyBase.cs` |
-| **Class** | `EnemyBase : MonoBehaviour` |
-| **Purpose** | Base class for all enemy types. Shared fields and behavior. |
-| **Fields** | `_health : float`, `_speed : float`, `_detectionRange : float`, `_attackRange : float`, `_attackDamage : float`, `_state : EnemyState`, `_player : Transform` |
-| **Methods** | `TakeDamage(float)`, `Die()`, `Alert()`, `Calm()` — virtual, override in subclasses |
+| **Interface** | `IDialogAction` |
+| **Namespace** | `Scripts.Game.Dialog.DialogActions` |
+| **Methods** | `void Execute()` |
 
-#### `EnemyAI.cs`
+### Triggers / Trigger (`Game/Triggers/Trigger.cs`)
+
 | Aspect | Detail |
 |--------|--------|
-| **Path** | `Assets/Scripts/Game/Enemies/EnemyAI.cs` |
-| **Class** | `EnemyAI : EnemyBase` |
-| **Purpose** | Patrol-chase AI. Follows waypoints in patrol state, chases player on detection. |
-| **Fields** | `_waypoints : List<Transform>`, `_currentWaypoint : int`, `_detectionTimer : float`, `_detectionTime : float`, `_chaseSpeed : float`, `_patrolSpeed : float` |
-| **Methods** | `Update()` — state machine tick; `Patrol()` — move along waypoints; `Chase()` — pursue player; `Search()` — investigate last known position; `DetectPlayer()` — check distance and line of sight |
+| **Class** | `Trigger` (plain class) |
+| **Namespace** | `Scripts.Game.Triggers` |
+| **Purpose** | Condition-based trigger. Activates when all conditions satisfied. |
+| **Fields** | `_guid`, `_conditions` (List<ICondition>), `_triggerEvents` (List<ITriggerEvent>), `_enableOnStart`, `_playOnce` |
+| **Methods** | `Enable()`, `Disable()`, `Run()`, `UpdateData(Trigger)` |
 
-#### `EnemyState.cs`
+### SceneTriggers (`Game/Triggers/SceneTriggers.cs`)
+
 | Aspect | Detail |
 |--------|--------|
-| **Path** | `Assets/Scripts/Game/Enemies/EnemyState.cs` |
-| **Enum** | `EnemyState` |
-| **Values** | `Idle`, `Patrol`, `Alert`, `Chase`, `Search`, `Attack`, `Return` |
+| **Class** | `SceneTriggers : MonoBehaviour` |
+| **Namespace** | `Scripts.Game.Triggers` |
+| **Purpose** | Manages all triggers in a scene. Restores state from save data. |
 
-#### `EnemyDetection.cs`
+### Conditions
+
+| Class | Namespace | Purpose |
+|-------|-----------|---------|
+| `ICondition` | `Scripts.Game.Triggers` | Interface: `event Action Complete`, `void Initialize()` |
+| `OnTriggerEnterCondition` | `Scripts.Game.Triggers.Conditions` | Completes when collider with tag enters trigger |
+| `ItemPickedUp` | `Scripts.Game.Triggers.Conditions` | Completes when specific `PickableItem` picked up |
+| `DialogChoiceCondition` | `Scripts.Game.Triggers.Conditions.Dialog` | Completes when specific dialog choice selected |
+| `OrCondition` | `Scripts.Game.Triggers.Conditions` | Completes when ANY child condition completes |
+
+### Trigger Events
+
+| Class | Namespace | Purpose |
+|-------|-----------|---------|
+| `ITriggerEvent` | `Scripts.Game.Triggers` | Interface: `void Run()` |
+| `SetActiveObjectTriggerEvent` | `Scripts.Game.Triggers.Events` | Enable/disable a GameObject |
+| `LoadNextSceneTriggerEvent` | `Scripts.Game.Triggers.Events` | Load next scene |
+| `EnableTriggerEvent` | `Scripts.Game.Triggers.Events` | Enable another trigger by GUID (chaining) |
+| `InnerDialogueTriggerEvent` | `Scripts.Game.Triggers.Events` | Show inner monologue text |
+| `SetStartNode` | `Scripts.Game.Triggers.Events.Dialog` | Change NPC's dialog start node |
+
+### Save System
+
+#### BaseSaver (`Game/Save/BaseSaver.cs`)
+
 | Aspect | Detail |
 |--------|--------|
-| **Path** | `Assets/Scripts/Game/Enemies/EnemyDetection.cs` |
-| **Class** | `EnemyDetection : MonoBehaviour` |
-| **Purpose** | Detection sensor for enemy. Uses cone + distance + line-of-sight check. |
-| **Fields** | `_viewAngle : float`, `_viewDistance : float`, `_hearingRadius : float`, `_playerLayer : LayerMask`, `_obstacleLayer : LayerMask` |
-| **Methods** | `CanSeePlayer(Transform) : bool` — angle + raycast; `CanHearPlayer(Vector3) : bool` — distance check |
+| **Class** | `BaseSaver : MonoBehaviour` (abstract) |
+| **Namespace** | `Scripts.Game.Save` |
+| **Abstract** | `string Key { get; }`, `JObject Save()`, `bool Load(JObject)` |
 
-### Game.Interactables
+#### SaveSystem (`Game/Save/SaveSystem.cs`)
 
-#### `Interactable.cs`
 | Aspect | Detail |
 |--------|--------|
-| **Path** | `Assets/Scripts/Game/Interactables/Interactable.cs` |
-| **Class** | `Interactable : MonoBehaviour` |
-| **Purpose** | Abstract base for all interactable objects in the world. |
-| **Fields** | `_interactText : string` (UI hint), `_canInteract : bool`, `_highlightMaterial : Material`, `_isHighlighted : bool` |
-| **Methods** | `Interact()` — abstract; `OnHoverEnter()` — apply highlight; `OnHoverExit()` — remove highlight; `CanInteract() : bool` |
+| **Class** | `SaveSystem` (plain class) |
+| **Namespace** | `Scripts.Game.Save` |
+| **Methods** | `Save(int slot)`, `Load(int slot)`, `GetSaveSceneIndex(int slot)` |
+| **Storage** | `Application.persistentDataPath/Save/Save_{slot}.json` |
 
-#### `PickupItem.cs`
+#### Savers
+
+| Saver | Namespace | Saves |
+|-------|-----------|-------|
+| `PlayerSaver` | `Scripts.Game.Save.Player` | Inventory, position, rotation, camera rotation |
+| `DisappearObjectSaver` | `Scripts.Game.Save.Items` | Whether a pickup object was taken |
+| `NPCDialogSaver` | `Game.Save.Dialog` | NPC's dialog start node |
+| `SceneTriggersSaver` | `Scripts.Game.Save.Triggers` | All trigger states (enabled, condition progress) |
+| `PhotoGallerySaver` | `Game.Save.PhotoGallery` | Photo gallery base64 images |
+
+#### Utils (`Game/Save/Utils.cs`)
+
 | Aspect | Detail |
 |--------|--------|
-| **Path** | `Assets/Scripts/Game/Interactables/PickupItem.cs` |
-| **Class** | `PickupItem : Interactable` |
-| **Purpose** | Item that can be picked up and added to inventory. |
-| **Fields** | `_item : InventoryItem`, `_amount : int`, `_pickupEffect : GameObject` (VFX), `_pickupSound : AudioClip` |
-| **Methods** | `Interact()` — add item to PlayerInventory, play effect/sound, destroy self |
+| **Namespace** | `Scripts.Game.Save.Utils` |
+| **Classes** | `SerializableVector3` (x, y, z), `SerializableQuaternion` (x, y, z, w) — JSON-friendly wrappers |
 
-#### `Door.cs`
+### PreviewShower (`Game/Preview/PreviewShower.cs`)
+
 | Aspect | Detail |
 |--------|--------|
-| **Path** | `Assets/Scripts/Game/Interactables/Door.cs` |
-| **Class** | `Door : Interactable` |
-| **Purpose** | Openable/closable door. Supports locked doors that require a key item. |
-| **Fields** | `_isOpen : bool`, `_isLocked : bool`, `_requiredItemID : int`, `_openRotation : Quaternion`, `_closeRotation : Quaternion`, `_openSpeed : float`, `_openSound : AudioClip`, `_closeSound : AudioClip` |
-| **Methods** | `Interact()` — if locked, check inventory for key; if unlocked, toggle open/close; `Open()`, `Close()` — animate rotation via lerp |
-
-#### `Note.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/Game/Interactables/Note.cs` |
-| **Class** | `Note : Interactable` |
-| **Purpose** | Readable note/document found in the world. Opens a note-reading UI. |
-| **Fields** | `_noteData : NoteData` (ScriptableObject with title, text, image) |
-| **Methods** | `Interact()` — fire JournalEvent.OnNoteAdded, open note UI |
-
-#### `PuzzleElement.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/Game/Interactables/PuzzleElement.cs` |
-| **Class** | `PuzzleElement : Interactable` |
-| **Purpose** | Base class for puzzle interactables. Each element contributes to a puzzle solution. |
-| **Fields** | `_puzzleID : string`, `_isSolved : bool`, `_elementIndex : int` |
-| **Methods** | `Interact()` — fire puzzle interaction event; `OnPuzzleSolve()` — virtual |
-
-#### `Lever.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/Game/Interactables/Lever.cs` |
-| **Class** | `Lever : PuzzleElement` |
-| **Purpose** | Interactable lever. Toggles state on interaction. |
-| **Fields** | `_isOn : bool`, `_onRotation : Quaternion`, `_offRotation : Quaternion` |
-| **Methods** | `Interact()` — toggle, animate; `GetState() : bool` |
-
-#### `ButtonPad.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/Game/Interactables/ButtonPad.cs` |
-| **Class** | `ButtonPad : PuzzleElement` |
-| **Purpose** | Push button. Can be part of a sequence puzzle. |
-| **Fields** | `_buttonID : int`, `_pressed : bool`, `_pressDepth : float`, `_pressSound : AudioClip` |
-| **Methods** | `Interact()` — press, animate, fire event with buttonID |
-
-#### `Keypad.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/Game/Interactables/Keypad.cs` |
-| **Class** | `Keypad : Interactable` |
-| **Purpose** | Numeric keypad puzzle. Player enters a code to unlock. |
-| **Fields** | `_correctCode : string`, `_enteredCode : string`, `_maxDigits : int`, `_isUnlocked : bool`, `_display : TextMeshPro` |
-| **Methods** | `Interact()` — open keypad UI; `EnterDigit(string)`; `Clear()`; `Confirm()` — check code, unlock if correct |
+| **Class** | `PreviewShower : MonoBehaviour` |
+| **Namespace** | `Scripts.Game.Preview` |
+| **Purpose** | 3D item preview viewer. Supports drag-rotate and swipe-to-next/previous with DOTween animations. |
+| **Subscribes** | `PreviewEvent.Drag`, `PreviewEvent.Show`, `PreviewEvent.ShowNext`, `PreviewEvent.ShowPrevious` |
 
 ---
 
-## Scripts.Windows
+## UI / Window Layer
 
-### Base
+### WindowPanel (`WindowSwitcher/WindowPanel.cs`)
 
-#### `BaseWindow.cs`
 | Aspect | Detail |
 |--------|--------|
-| **Path** | `Assets/Scripts/Windows/Base/BaseWindow.cs` |
-| **Class** | `BaseWindow : MonoBehaviour` |
-| **Purpose** | Abstract base for all UI windows. Provides common open/close lifecycle. |
-| **Fields** | `_isOpen : bool`, `_animator : Animator`, `_openTrigger : string`, `_closeTrigger : string` |
-| **Methods** | `Open()` — virtual, activate gameobject, play open anim; `Close()` — virtual, play close anim, deactivate; `OnOpened()`, `OnClosed()` — virtual callbacks |
+| **Class** | `WindowPanel : MonoBehaviour` (abstract) |
+| **Namespace** | `Scripts.WindowSwitcher` |
+| **Lifecycle** | `abstract void Load()`, `abstract void Destroy()`, `abstract void Open(object context)`, `abstract void Close()` |
+| **Property** | `abstract int Priority { get; }` — sorting order in container |
 
-#### `WindowSwitcher.cs`
+### WindowSwitcher (`WindowSwitcher/WindowSwitcher.cs`)
+
 | Aspect | Detail |
 |--------|--------|
-| **Path** | `Assets/Scripts/Windows/Base/WindowSwitcher.cs` |
-| **Class** | `WindowSwitcher : AutoEventBehaviour` |
-| **Purpose** | Manages window stack. Each window has a unique name. Supports opening with context data. |
-| **Fields** | `_windowPrefabs : List<WindowPrefab>` (serialized), `_windowCache : Dictionary<string, BaseWindow>`, `_windowStack : List<BaseWindow>` |
-| **Listeners** | `On(UIEvents.OpenWindow)` — open; `On(UIEvents.OpenWindowWithContext)` — open with context; `On(UIEvents.CloseWindow)` — close by name; `On(UIEvents.CloseLastWindow)` — pop stack; `On(UIEvents.QuitGame)`; `On(UIEvents.StartNewGame)`; `On(UIEvents.ExitToMainMenu)` |
-| **Methods** | `OpenWindow(string, object)` — instantiate or get from cache, push to stack; `CloseWindow(string)` — find in stack, close; `CloseLast()` — pop; `CloseAll()`; `TryGetWindow<T>(string)` |
+| **Class** | `WindowSwitcher : MonoBehaviour` |
+| **Namespace** | `Scripts.WindowSwitcher` |
+| **Purpose** | Central window manager. Prefab dictionary, instance cache, navigation stack. |
+| **Methods** | `ShowWindow(name, closePrevious, context)`, `CloseWindow(name)`, `CloseLast()` |
+| **Helper** | Nested `Window` class with `[ValueDropdown]` on `Name` from `Constants.AllWindows` |
 
-#### `WindowController.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/Windows/Base/WindowController.cs` |
-| **Class** | `WindowController : MonoBehaviour` |
-| **Purpose** | Per-window controller. Holds logic for each specific window type. |
-| **Methods** | `Setup(object context)` — called when window is opened with context data |
+### Windows
 
-#### `WindowPrefab.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/Windows/Base/WindowPrefab.cs` |
-| **Class** | `WindowPrefab` (Serializable) |
-| **Purpose** | Pair of window name + prefab reference for Inspector assignment. |
-| **Fields** | `Name : string`, `Prefab : BaseWindow` |
+| Window | Namespace | Priority | Purpose |
+|--------|-----------|----------|---------|
+| `MainMenuWindow` | (global) | 1 | New Game, Continue, Settings, Quit |
+| `PlayerGUI` | (global) | 1 | HUD: crosshair, interaction prompt, subtitles |
+| `DialogWindow` | `Scripts.Windows.Dialog` | 2 | Dialog tree with choice buttons (object-pooled) |
+| `InventoryWindow` | `Scripts.Windows.Inventory` | 2 | Item list with 3D preview, equip/unequip |
+| `PauseWindow` | (global) | 2 | Continue, Save, Load, Settings, Exit (with confirmation popup) |
+| `PhotoGalleryWindow` | `Windows.Game.PhotoGallery` | 2 | Photo grid display |
+| `SaveWindow` | `Scripts.Windows.Save` | 3 | 5 save slots, save/load mode |
+| `SettingsPopUp` | (global) | 3 | Game/Graphics/Audio tabs, apply/revert/reset |
+| `LoadingWindow` | `Scripts.Windows.App.Loading` | 99 | Spinning loading animation |
 
-### Windows.MainMenu
+### UI Components
 
-#### `MainMenu.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/Windows/MainMenu/MainMenu.cs` |
-| **Class** | `MainMenu : BaseWindow` |
-| **Purpose** | Main menu screen. Buttons: New Game, Continue, Settings, Gallery, Quit. |
-| **Fields** | `_newGameButton : Button`, `_continueButton : Button`, `_settingsButton : Button`, `_galleryButton : Button`, `_quitButton : Button` |
-| **Methods** | `Open()` — check for existing saves (enable/disable Continue button); `OnNewGame()` — fire UIEvents.StartNewGame; `OnContinue()` — load latest save; `OnSettings()` — open settings window; `OnGallery()` — open photo gallery; `OnQuit()` — fire UIEvents.QuitGame |
-
-#### `StartButton.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/Windows/MainMenu/StartButton.cs` |
-| **Class** | `StartButton : MonoBehaviour` |
-| **Purpose** | UI button that fires `UIEvents.StartNewGame` on click. |
-| **Method** | `OnClick()` — Broadcast(UIEvents.StartNewGame) |
-
-### Windows.Game
-
-#### `HUD.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/Windows/Game/HUD.cs` |
-| **Class** | `HUD : AutoEventBehaviour` |
-| **Purpose** | Primary gameplay HUD. Shows health, sanity, stamina, ammo, interaction prompts. |
-| **Fields** | `_healthBar : Slider`, `_sanityBar : Slider`, `_staminaBar : Slider`, `_interactPrompt : TextMeshProUGUI`, `_itemIcon : Image`, `_itemName : TextMeshProUGUI`, `_flashlightIcon : Image`, `_crosshair : Image` |
-| **Listeners** | `On(PlayerEvent.OnTakeDamage)` — update health bar; `On(SanityEvent.OnSanityChanged)` — update sanity bar; `On(StaminaEvent.OnStaminaChanged)` — update stamina bar; `On(GameEvent.InteractHover)` — show prompt; `On(GameEvent.InteractHoverEnd)` — hide prompt; `On(FlashlightEvent.OnFlashlightEnabled)` — update icon; `On(FlashlightEvent.OnFlashlightDisabled)` — update icon; `On(GameEvent.InnerDialogue)` — show inner text |
-
-#### `InventoryWindow.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/Windows/Game/InventoryWindow.cs` |
-| **Class** | `InventoryWindow : BaseWindow` |
-| **Purpose** | Grid-based inventory UI. Shows items with icons, allows equipping/using/dropping. |
-| **Fields** | `_grid : GridLayoutGroup`, `_slotPrefab : InventorySlot`, `_itemTooltip : Tooltip`, `_categoryTabs : ToggleGroup` |
-| **Methods** | `Open()` — refresh grid from PlayerInventory; `Refresh()` — rebuild item slots; `OnSlotClick(InventorySlot)` — use/equip; `OnSlotRightClick(InventorySlot)` — context menu; `FilterByCategory(string)` |
-
-#### `InventorySlot.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/Windows/Game/InventoryWindow.cs` (inner class) |
-| **Class** | `InventorySlot : MonoBehaviour` |
-| **Purpose** | Single slot in inventory grid. Displays item icon, stack count. |
-| **Fields** | `_icon : Image`, `_countText : TextMeshProUGUI`, `_item : InventoryItem`, `_isSelected : bool` |
-| **Methods** | `SetItem(InventoryItem, int)`; `Clear()`; `OnClick()`; `OnRightClick()` |
-
-#### `DialogPanel.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/Windows/Game/DialogPanel.cs` |
-| **Class** | `DialogPanel : BaseWindow` |
-| **Purpose** | NPC dialog UI. Shows speaker name, text, and choice buttons. |
-| **Fields** | `_speakerName : TextMeshProUGUI`, `_dialogText : TextMeshProUGUI`, `_choicesContainer : Transform`, `_choiceButtonPrefab : GameObject`, `_typewriterSpeed : float` |
-| **Listeners** | `On(DialogEvent.OpenDialog)` — show dialog; `On(DialogEvent.OnChoice)` — handle choice; `On(DialogEvent.CloseDialog)` — close panel |
-| **Methods** | `ShowNode(string nodeID)` — load Yarn node; `ShowChoices(List<Choice>)` — create choice buttons; `OnChoiceSelected(string choiceID)` — fire DialogEvent.OnChoice; `TypewriteText(string)` — animate text reveal |
-
-#### `PhotoGallery.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/Windows/Game/PhotoGallery.cs` |
-| **Class** | `PhotoGallery : BaseWindow` |
-| **Purpose** | Photo gallery window. Shows all taken photos in a grid. Supports fullscreen preview. |
-| **Fields** | `_grid : GridLayoutGroup`, `_photoPrefab : Photo`, `_previewImage : Image`, `_fullscreenView : GameObject`, `_deleteButton : Button` |
-| **Listeners** | `On(PhotoEvents.OnPhotoTaken)` — refresh grid |
-| **Methods** | `Open()` — load photos from PhotoSystem; `Refresh()` — spawn photo prefabs; `OnPhotoClick(Sprite)` — show fullscreen; `OnDelete()` — delete current photo; `OnExport()` — save to disk |
-
-#### `Photo.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/Windows/Game/PhotoGallery/Photo.cs` |
-| **Class** | `Photo : MonoBehaviour` |
-| **Purpose** | UI element for a single photo thumbnail in the gallery. |
-| **Fields** | `_image : Image`, `_button : Button` |
-| **Methods** | `SetImage(Sprite)` — set thumbnail sprite |
-
-#### `JournalWindow.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/Windows/Game/JournalWindow.cs` |
-| **Class** | `JournalWindow : BaseWindow` |
-| **Purpose** | Journal/notes UI. Shows collected notes and story documents. |
-| **Fields** | `_notesList : Transform`, `_notePrefab : NoteUI`, `_contentArea : TextMeshProUGUI`, `_titleArea : TextMeshProUGUI`, `_categories : ToggleGroup` |
-| **Listeners** | `On(JournalEvent.OnNoteAdded)` — refresh list |
-| **Methods** | `Open()` — load notes from save data; `OnNoteSelected(NoteData)` — show content |
-
-#### `PauseMenu.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/Windows/Game/PauseMenu.cs` |
-| **Class** | `PauseMenu : BaseWindow` |
-| **Purpose** | Pause overlay. Buttons: Resume, Settings, Save, Load, Main Menu. |
-| **Fields** | `_resumeButton : Button`, `_settingsButton : Button`, `_saveButton : Button`, `_loadButton : Button`, `_mainMenuButton : Button` |
-| **Methods** | `Open()` — set time scale to 0; `Close()` — set time scale to 1; `OnResume()`; `OnSave()` — open save UI; `OnLoad()` — open load UI; `OnMainMenu()` — confirm then exit |
-
-#### `SettingsWindow.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/Windows/Game/SettingsWindow.cs` |
-| **Class** | `SettingsWindow : BaseWindow` |
-| **Purpose** | Settings screen. Tabs: Audio, Video, Controls. |
-| **Fields** | `_masterSlider : Slider`, `_musicSlider : Slider`, `_sfxSlider : Slider`, `_qualityDropdown : Dropdown`, `_resolutionDropdown : Dropdown`, `_fullscreenToggle : Toggle`, `_sensitivitySlider : Slider`, `_invertYToggle : Toggle` |
-| **Methods** | `Open()` — load current settings; `OnMasterVolume(float)`; `OnMusicVolume(float)`; `OnSFXVolume(float)`; `OnQualityChanged(int)`; `OnResolutionChanged(int)`; `OnFullscreen(bool)`; `OnSensitivityChanged(float)`; `OnApply()`; `OnReset()` |
-
-#### `SaveLoadWindow.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/Windows/Game/SaveLoadWindow.cs` |
-| **Class** | `SaveLoadWindow : BaseWindow` |
-| **Purpose** | Save/Load UI with slot grid. Each slot shows screenshot, scene name, date, play time. |
-| **Fields** | `_slots : List<SaveSlot>`, `_slotPrefab : SaveSlot`, `_mode : SaveLoadMode` (Save/Load), `_modeToggle : ToggleGroup`, `_overwriteConfirm : GameObject` |
-| **Methods** | `Open()` — set mode, refresh slots; `RefreshSlots()` — populate from SaveSystem; `OnSlotClick(int slotIndex)` — save or load; `OnDeleteSlot(int)`; `OnModeToggle(SaveLoadMode)` |
-
-#### `SaveSlot.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/Windows/Game/SaveLoadWindow.cs` (inner) |
-| **Class** | `SaveSlot : MonoBehaviour` |
-| **Purpose** | Single slot display in save/load screen. |
-| **Fields** | `_screenshot : RawImage`, `_sceneName : TextMeshProUGUI`, `_dateTime : TextMeshProUGUI`, `_playTime : TextMeshProUGUI`, `_isEmpty : bool` |
-| **Methods** | `SetData(SaveFile)`, `SetEmpty()`, `OnClick()`, `OnDelete()` |
-
-### Windows.Game.Dialog
-
-#### `DialogСhoice` (⚠️ note: Cyrillic 'С' not Latin 'C')
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/Windows/Game/Dialog/DialogСhoice.cs` |
-| **Class** | `DialogСhoice : MonoBehaviour` |
-| **Purpose** | A single choice button in the dialog UI. |
-| **Fields** | `_text : TextMeshProUGUI`, `_button : Button` |
-| **Methods** | `Setup(string choiceID, string text, Action<string> callback)` — set label, wire click |
-
-### Windows.Game.Preview
-
-#### `PreviewWindow.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/Windows/Game/Preview/PreviewWindow.cs` |
-| **Class** | `PreviewWindow : BaseWindow` |
-| **Purpose** | 3D model preview window. Used for examining items or documents in 3D. |
-| **Fields** | `_previewCamera : Camera`, `_modelContainer : Transform`, `_dragSensitivity : float`, `_zoomSpeed : float`, `_minZoom : float`, `_maxZoom : float`, `_currentModel : Transform` |
-| **Listeners** | `On(PreviewEvent.Show)` — load model; `On(PreviewEvent.Drag)` — rotate; `On(PreviewEvent.ShowNext)` — next variant; `On(PreviewEvent.ShowPrevious)` — previous variant |
-| **Methods** | `ShowModel(Transform, Vector3)`; `RotateModel(Vector2)`; `Zoom(float)`; `NextVariant()`; `PreviousVariant()` |
-
-#### `PreviewDragHandler.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/Windows/Game/Preview/PreviewDragHandler.cs` |
-| **Class** | `PreviewDragHandler : MonoBehaviour, IDragHandler` |
-| **Purpose** | Captures mouse drag events on the preview area and fires `PreviewEvent.Drag`. |
-| **Methods** | `OnDrag(PointerEventData)` — fire PreviewEvent.Drag with delta |
+| Component | Namespace | Purpose |
+|-----------|-----------|---------|
+| `DragbleUIElement` | `Scripts.UI` | `IDragHandler`, fires `Drag(Vector2)` event |
+| `Switcher` | (global) | On/off toggle switch with DOTween animation |
+| `YesNoPopup` | `Scripts.UI` | Yes/No confirmation popup with `Result(bool)` event |
+| `DialogWindowChoice` | `Scripts.Windows.Dialog` | Single choice button (pooled prefab) |
+| `DialogWindowContext` | `Scripts.Windows.Dialog` | Data: `NodeID` |
+| `SaveWindowContext` | `Scripts.Windows.Save` | Data: `IsSaving` |
+| `SaveSlot` | `Scripts.Windows.Save` | Single save slot button |
+| `Photo` | `Windows.Game.PhotoGallery` | Single photo thumbnail |
 
 ---
 
-## Scripts.World
+## Other Components
 
-### World.Core
+### ScrollHealth (`HealsBar/ScrollHealth.cs`)
 
-#### `AmbientSound.cs`
 | Aspect | Detail |
 |--------|--------|
-| **Path** | `Assets/Scripts/World/Core/AmbientSound.cs` |
-| **Class** | `AmbientSound : MonoBehaviour` |
-| **Purpose** | Ambient audio source in the world. Can be positional or global. |
-| **Fields** | `_audioSource : AudioSource`, `_soundType : AmbientType` (Wind, Drip, Creak, Hum, Distant), `_minInterval : float`, `_maxInterval : float`, `_playOnStart : bool` |
-| **Methods** | `Start()` — if playOnStart, play; `Play()` — play one-shot; `PlayLoop()` — loop |
+| **Class** | `ScrollHealth : MonoBehaviour` |
+| **Purpose** | Animated health bar with scrolling texture and status icons. Currently WIP — state change logic is disabled. |
 
-#### `MovingPlatform.cs`
+### Presenter (`SlidePresenter/Presenter.cs`)
+
 | Aspect | Detail |
 |--------|--------|
-| **Path** | `Assets/Scripts/World/Core/MovingPlatform.cs` |
-| **Class** | `MovingPlatform : MonoBehaviour` |
-| **Purpose** | Platform that moves between waypoints. Can be triggered or timed. |
-| **Fields** | `_waypoints : List<Transform>`, `_speed : float`, `_currentIndex : int`, `_waitTime : float`, `_isMoving : bool`, `_playerCanRide : bool` |
-| **Methods** | `Update()` — move toward next waypoint; `StartMove()`, `StopMove()`, `GoToWaypoint(int)` |
+| **Class** | `Presenter : MonoBehaviour` (requires `Image`) |
+| **Purpose** | Sprite-based slideshow/animator. Cycles through `List<Sprite>` at configurable FPS. |
+| **Methods** | `Play()`, `Stop()` |
 
-#### `LightingController.cs`
+### BlinkingAnimation (`Animations/BlinkingAnimation.cs`)
+
 | Aspect | Detail |
 |--------|--------|
-| **Path** | `Assets/Scripts/World/Core/LightingController.cs` |
-| **Class** | `LightingController : AutoEventBehaviour` |
-| **Purpose** | Controls global lighting. Supports day/night cycle (if applicable) and flicker effects. |
-| **Fields** | `_mainLight : Light`, `_ambientColor : Color`, `_flickerIntensity : float`, `_flickerSpeed : float`, `_isFlickering : bool` |
-| **Methods** | `SetAmbient(Color)`, `SetMainLightIntensity(float)`, `StartFlicker(float duration)`, `StopFlicker()` |
+| **Class** | `BlinkingAnimation : MonoBehaviour` |
+| **Namespace** | `Scripts.Animations` |
+| **Purpose** | Toggles a GameObject on/off at configurable intervals. |
+| **Fields** | `_object`, `_onDelay`, `_offDelay`, `_playOnStart` |
 
-#### `VolumeController.cs`
+### Anchor (`Editor/Anchor.cs`)
+
 | Aspect | Detail |
 |--------|--------|
-| **Path** | `Assets/Scripts/World/Core/VolumeController.cs` |
-| **Class** | `VolumeController : AutoEventBehaviour` |
-| **Purpose** | Controls URP Volume (post-processing). Blends between volume profiles for effects like sanity degradation. |
-| **Fields** | `_defaultProfile : VolumeProfile`, `_sanityLowProfile : VolumeProfile`, `_hallucinationProfile : VolumeProfile`, `_transitionSpeed : float`, `_currentVolume : Volume` |
-| **Listeners** | `On(SanityEvent.OnSanityChanged)` — blend toward sanityLowProfile based on sanity ratio; `On(SanityEvent.OnHallucination)` — blend to hallucination profile |
-
-### World.Interactables
-
-#### `WorldPickupItem.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/World/Core/WorldPickupItem.cs` |
-| **Class** | `WorldPickupItem : Interactable` |
-| **Purpose** | World-placed item that can be picked up. Differs from PickupItem in that it uses a physical 3D model. |
-| **Fields** | `_item : InventoryItem`, `_amount : int`, `_pickupEffect : GameObject`, `_rotateSpeed : float`, `_bobSpeed : float`, `_bobHeight : float` |
-| **Methods** | `Update()` — idle rotation + bobbing animation; `Interact()` — add to inventory, play effect |
-
-#### `WorldPickupUsable.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/World/Core/WorldPickupUsable.cs` |
-| **Class** | `WorldPickupUsable : WorldPickupItem` |
-| **Purpose** | Like WorldPickupItem but for UsableItem. Adds equipment auto-equip behavior. |
-| **Fields** | `_autoEquip : bool` |
-| **Methods** | `Interact()` — pickup + optionally auto-equip |
-
-### World.Triggers
-
-#### `BaseTrigger.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/World/Triggers/BaseTrigger.cs` |
-| **Class** | `BaseTrigger : MonoBehaviour` |
-| **Purpose** | Abstract base for all trigger types. Detects player entry/exit. |
-| **Fields** | `_playerTag : string`, `_triggerOnEnter : bool`, `_triggerOnExit : bool`, `_oneTime : bool`, `_hasTriggered : bool`, `_delay : float` |
-| **Methods** | `OnTriggerEnter(Collider)` — if player, call `OnTriggerActivated()`; `OnTriggerExit(Collider)` — if player, call `OnTriggerDeactivated()`; `OnTriggerActivated()` — abstract; `OnTriggerDeactivated()` — virtual |
-
-#### `StoryTrigger.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/World/Triggers/StoryTrigger.cs` |
-| **Class** | `StoryTrigger : BaseTrigger` |
-| **Purpose** | Fires story event when player enters trigger zone. |
-| **Fields** | `_storyID : string`, `_fireOnlyOnce : bool` |
-| **Methods** | `OnTriggerActivated()` — fire `StoryEvent.OnStoryBeat` with storyID |
-
-#### `DialogTrigger.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/World/Triggers/DialogTrigger.cs` |
-| **Class** | `DialogTrigger : BaseTrigger` |
-| **Purpose** | Opens a dialog node when player enters trigger zone. |
-| **Fields** | `_nodeID : string` |
-| **Methods** | `OnTriggerActivated()` — fire `DialogEvent.OpenDialog` with nodeID |
-
-#### `InnerDialogTrigger.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/World/Triggers/InnerDialogTrigger.cs` |
-| **Class** | `InnerDialogTrigger : BaseTrigger` |
-| **Purpose** | Shows inner monologue text when player enters trigger zone. |
-| **Fields** | `_text : string`, `_duration : float` |
-| **Methods** | `OnTriggerActivated()` — fire `GameEvent.InnerDialogue` with text |
-
-#### `DamageTrigger.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/World/Triggers/DamageTrigger.cs` |
-| **Class** | `DamageTrigger : BaseTrigger` |
-| **Purpose** | Deals damage to player on contact (e.g., toxic gas, cold spots). |
-| **Fields** | `_damagePerSecond : float`, `_damageType : DamageType` |
-| **Methods** | `OnTriggerActivated()` — start damage coroutine; `OnTriggerDeactivated()` — stop damage coroutine |
-
-#### `TeleportTrigger.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/World/Triggers/TeleportTrigger.cs` |
-| **Class** | `TeleportTrigger : BaseTrigger` |
-| **Purpose** | Teleports player to a target location. |
-| **Fields** | `_targetTransform : Transform` |
-| **Methods** | `OnTriggerActivated()` — move player to target position |
-
-#### `DisableObjectsTrigger.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/World/Triggers/DisableObjectsTrigger.cs` |
-| **Class** | `DisableObjectsTrigger : BaseTrigger` |
-| **Purpose** | Disables specific GameObjects when triggered. Used for optimization (distance culling) or scripted sequences. |
-| **Fields** | `_objectsToDisable : List<GameObject>` |
-| **Methods** | `OnTriggerActivated()` — set all objects inactive |
-
-#### `EnableObjectsTrigger.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/World/Triggers/EnableObjectsTrigger.cs` |
-| **Class** | `EnableObjectsTrigger : BaseTrigger` |
-| **Purpose** | Enables GameObjects when triggered. Used for spawning enemies or revealing paths. |
-| **Fields** | `_objectsToEnable : List<GameObject>` |
-| **Methods** | `OnTriggerActivated()` — set all objects active |
-
-#### `SanityTrigger.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/World/Triggers/SanityTrigger.cs` |
-| **Class** | `SanityTrigger : BaseTrigger` |
-| **Purpose** | Area that affects player sanity (drains or restores). |
-| **Fields** | `_sanityEffect : float` (positive = restore, negative = drain), `_effectPerSecond : bool` |
-| **Methods** | `OnTriggerActivated()` — apply sanity effect |
-
-#### `SoundTrigger.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/World/Triggers/SoundTrigger.cs` |
-| **Class** | `SoundTrigger : BaseTrigger` |
-| **Purpose** | Plays a sound when player enters trigger zone. |
-| **Fields** | `_sound : AudioClip`, `_spatial : bool` |
-| **Methods** | `OnTriggerActivated()` — play via AudioManager |
-
-#### `CutsceneTrigger.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/World/Triggers/CutsceneTrigger.cs` |
-| **Class** | `CutsceneTrigger : BaseTrigger` |
-| **Purpose** | Triggers a cutscene sequence. |
-| **Fields** | `_cutsceneID : string`, `_cutscene : Cutscene` (reference) |
-| **Methods** | `OnTriggerActivated()` — start cutscene, fire CutsceneEvent.OnCutsceneStart |
-
-#### `SceneLoadTrigger.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/World/Triggers/SceneLoadTrigger.cs` |
-| **Class** | `SceneLoadTrigger : BaseTrigger` |
-| **Purpose** | Loads a new scene when player enters trigger (level transition). |
-| **Fields** | `_sceneName : string`, `_spawnPointID : string` |
-| **Methods** | `OnTriggerActivated()` — fire GameEvent.LoadNextScene with scene name |
-
-#### `ConditionalTrigger.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/World/Triggers/ConditionalTrigger.cs` |
-| **Class** | `ConditionalTrigger : BaseTrigger` |
-| **Purpose** | Only triggers if a condition is met (item in inventory, story flag set, etc.). |
-| **Fields** | `_conditions : List<TriggerCondition>`, `_triggerOnFail : BaseTrigger` (fallback) |
-| **Methods** | `OnTriggerActivated()` — evaluate conditions; if all met, proceed; else, fire fallback |
-
-#### `TriggerCondition.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/World/Triggers/TriggerCondition.cs` |
-| **Class** | `TriggerCondition` (ScriptableObject or Serializable) |
-| **Purpose** | A single condition: type (HasItem, StoryFlag, SanityLevel, etc.) and value. |
-| **Fields** | `ConditionType : ConditionType` (enum), `TargetValue : string`, `CheckValue : string` |
-
-### World.Story
-
-#### `StoryManager.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/World/Story/StoryManager.cs` |
-| **Class** | `StoryManager : AutoEventBehaviour` |
-| **Purpose** | Global story state tracker. Maintains flags for story progression. |
-| **Fields** | `_storyFlags : Dictionary<string, bool>`, `_storyBranches : Dictionary<string, int>` |
-| **Listeners** | `On(StoryEvent.OnStoryBeat)` — set flag; `On(StoryEvent.OnStoryProgress)` — advance branch |
-| **Methods** | `HasFlag(string) : bool`; `SetFlag(string, bool)`; `GetBranchProgress(string) : int`; `Reset()` |
-
-#### `EndingManager.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/World/Story/EndingManager.cs` |
-| **Class** | `EndingManager : AutoEventBehaviour` |
-| **Purpose** | Determines game ending based on player actions and story flags. |
-| **Fields** | `_endings : List<EndingCondition>` (conditions per ending type) |
-| **Listeners** | `On(StoryEvent.OnEnding)` — evaluate and trigger ending |
-| **Methods** | `EvaluateEnding() : int` — check all conditions, return ending index; `TriggerEnding(int)` |
-
----
-
-## Scripts.Utilities
-
-#### `FPSDisplay.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/Utilities/FPSDisplay.cs` |
-| **Class** | `FPSDisplay : MonoBehaviour` |
-| **Purpose** | Debug FPS counter overlay. Shows FPS, frame time, memory usage. |
-| **Fields** | `_fpsText : TextMeshProUGUI`, `_updateInterval : float` |
-| **Methods** | `Update()` — calculate FPS, update display |
-
-#### `FPSCounter.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/Utilities/FPSCounter.cs` |
-| **Class** | `FPSCounter : MonoBehaviour` |
-| **Purpose** | Performance counter. Logs FPS to console. |
-| **Methods** | `Update()` — sample FPS, log every second |
-
-#### `Screenshot.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/Utilities/Screenshot.cs` |
-| **Class** | `Screenshot : MonoBehaviour` |
-| **Purpose** | Takes screenshots. Press F12 to capture. |
-| **Methods** | `Update()` — detect key press; `Capture()` — ScreenCapture.CaptureScreenshot |
-
-#### `MaterialController.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/Utilities/MaterialController.cs` |
-| **Class** | `MaterialController : MonoBehaviour` |
-| **Purpose** | Controls material properties at runtime (color, emission, tiling). |
-| **Fields** | `_renderer : Renderer`, `_materialIndex : int`, `_propertyName : string` |
-| **Methods** | `SetColor(Color)`, `SetFloat(float)`, `SetTexture(Texture)`, `SetEmission(Color)` |
-
-#### `MeshSaver.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/Utilities/MeshSaver.cs` |
-| **Class** | `MeshSaver : MonoBehaviour` |
-| **Purpose** | Editor utility. Saves mesh to .asset file. |
-| **Methods** | `SaveMesh()` — creates mesh asset from MeshFilter |
-
-#### `FOVController.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/Utilities/FOVController.cs` |
-| **Class** | `FOVController : MonoBehaviour` |
-| **Purpose** | Changes camera FOV dynamically (sprinting, effects). |
-| **Fields** | `_camera : Camera`, `_defaultFOV : float`, `_targetFOV : float`, `_transitionSpeed : float` |
-| **Methods** | `SetFOV(float)`, `ResetFOV()`, `Update()` — lerp toward target |
-
-#### `Extensions.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/Utilities/Extensions.cs` |
-| **Class** | `Extensions` (static) |
-| **Purpose** | Extension methods used across the project. |
-| **Methods** | `IsPlayer(GameObject) : bool` — check tag; `ToHex(Color) : string` — color to hex; `GetOrAddComponent<T>(GameObject)`; `Shuffle<T>(List<T>)` — Fisher-Yates shuffle |
-
-#### `Helpers.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/Utilities/Helpers.cs` |
-| **Class** | `Helpers` (static) |
-| **Purpose** | General helper functions. |
-| **Methods** | `ClampAngle(float, float, float)`, `LerpAngle(float, float, float)`, `RandomRange(Vector2) : float`, `IsInLayerMask(GameObject, LayerMask) : bool` |
-
-#### `Interpolations.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/Utilities/Interpolations.cs` |
-| **Class** | `Interpolations` (static) |
-| **Purpose** | Custom easing functions for animations. |
-| **Methods** | `EaseInOutQuad(float)`, `EaseOutCubic(float)`, `EaseInBack(float)`, `EaseOutBounce(float)`, `Lerp(Vector3, Vector3, float, Func<float, float>)` |
-
-#### `ValueDropdown.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/Utilities/ValueDropdown.cs` |
-| **Class** | `ValueDropdownAttribute : PropertyAttribute` |
-| **Purpose** | Custom Odin-like dropdown attribute for Unity Editor. Shows a list of values. |
-| **Methods** | *(property drawer)* |
-
-#### `Singleton.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/Utilities/Singleton.cs` |
-| **Class** | `Singleton<T> : MonoBehaviour where T : MonoBehaviour` |
-| **Purpose** | Generic MonoBehaviour singleton base class. |
-| **Methods** | `Instance : T` (static, lazy-initialized); `Awake()` — set instance, DontDestroyOnLoad |
-
-#### `IDGenerator.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/Utilities/IDGenerator.cs` |
-| **Class** | `IDGenerator : MonoBehaviour` |
-| **Purpose** | Generates unique IDs for objects. Used by save system to identify entities. |
-| **Fields** | `ID : string` (GUID) |
-| **Methods** | `Generate()` — create new GUID; `SetID(string)` |
-
----
-
-## Scripts.Settings
-
-#### `GameSettings.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/Settings/GameSettings.cs` |
-| **Class** | `GameSettings : MonoBehaviour` |
-| **Purpose** | Runtime game settings. Load/save from PlayerPrefs or JSON file. |
-| **Fields** | `MasterVolume : float`, `MusicVolume : float`, `SFXVolume : float`, `QualityLevel : int`, `Resolution : Vector2Int`, `Fullscreen : bool`, `Sensitivity : float`, `InvertY : bool`, `Language : string`, `Subtitles : bool` |
-| **Methods** | `Load()`, `Save()`, `Apply()` — push settings to AudioManager, QualitySettings, Screen, InputManager |
-
-#### `SettingsData.cs`
-| Aspect | Detail |
-|--------|--------|
-| **Path** | `Assets/Scripts/Settings/SettingsData.cs` |
-| **Class** | `SettingsData` |
-| **Purpose** | Serializable settings container. Used by save system to persist settings with game data. |
-| **Fields** | `MasterVolume`, `MusicVolume`, `SFXVolume`, `QualityLevel`, `ResolutionWidth`, `ResolutionHeight`, `Fullscreen`, `Sensitivity`, `InvertY`, `Language` |
-
----
-
-## Data Flow Examples
-
-### Pickup Item Flow
-1. Player walks near PickupItem, `PlayerInteraction` raycast detects it
-2. `GameEvent.InteractHover` fires → HUD shows interaction prompt
-3. Player presses Interact key → `InputManager` fires `InputEvent.OnInteract`
-4. `InteractionController` receives event → calls `PlayerInteraction.Interact()`
-5. `PickupItem.Interact()` → calls `PlayerInventory.AddItem(item)`
-6. `PlayerInventory` fires `GameEvent.AddItem` → AudioManager plays pickup sound
-7. PickupItem GameObject is destroyed
-
-### Dialog Flow
-1. Player enters `DialogTrigger` → `DialogTrigger.OnTriggerActivated()`
-2. Fires `DialogEvent.OpenDialog` with nodeID
-3. `DialogPanel` receives event → loads Yarn node, displays text
-4. Player clicks choice → `DialogСhoice.OnClick()` → fires `DialogEvent.OnChoice`
-5. StoryManager tracks story flags from choice
-
-### Photo Capture Flow
-1. Player presses photo button → `PhotoSystem.TakePhoto()`
-2. Photo camera renders to RenderTexture → captured as Sprite
-3. `PhotoEvents.OnPhotoTaken` fires → PhotoGallery refreshes
-4. `SaveSystem` serializes photo data on next save
-
-### Save/Load Flow
-1. Player opens PauseMenu → clicks Save
-2. `SaveLoadWindow` shows slots → `SaveSystem.GetAllSaves()`
-3. Player picks slot → `SaveSystem.Save(slot)`
-4. SaveSystem iterates `_registeredComponents`, calls `SaveState()` on each
-5. Collects all data into `GameData` → JSON serialize → encrypt → write to file
-6. On Load: read → decrypt → deserialize → call `LoadState()` on each component
-
----
+| **Class** | `Anchor` (static) |
+| **Purpose** | Editor utility (Ctrl+L). Bakes RectTransform offsets into anchor values for resolution-independent UI. |
