@@ -20,6 +20,7 @@ namespace Scripts.Game.NPC
             _currentState = State.Chase;
             _agent.speed = _chaseSpeed;
             _agent.isStopped = false;
+            _animator?.SetFloat(SpeedParam, 1f);
         }
     }
 }

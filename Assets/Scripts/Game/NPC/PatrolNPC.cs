@@ -12,6 +12,7 @@ namespace Scripts.Game.NPC
     {
         [SerializeField, FoldoutGroup("Компоненты")] private NavMeshAgent _agent;
         [SerializeField, FoldoutGroup("Компоненты")] private SplineContainer _splineContainer;
+        [SerializeField, FoldoutGroup("Компоненты")] private Animator _animator;
         [SerializeField, FoldoutGroup("Видимость")] private float _viewDistance = 10f;
         [SerializeField, FoldoutGroup("Видимость")] private float _viewAngle = 90f;
         [SerializeField, FoldoutGroup("Видимость")] private LayerMask _obstacleLayerMask;
@@ -23,14 +24,16 @@ namespace Scripts.Game.NPC
 
         private State _currentState;
         
+        private static readonly int SpeedParam = Animator.StringToHash("Speed");
+        private static readonly int LookingBehindParam = Animator.StringToHash("LookingBehind");
+
         private enum State {Patrol,Chase,Search}
 
         private void Start()
         {
             _player = GameObject.FindWithTag("Player").transform;
-            _currentState = State.Patrol;
-            _agent.speed = _patrolSpeed;
             _agent.autoBraking = true;
+            if (_animator == null) _animator = GetComponentInChildren<Animator>();
             
             var knots = _splineContainer.Spline.Knots.ToList();
             var length = _splineContainer.CalculateLength();
@@ -46,6 +49,8 @@ namespace Scripts.Game.NPC
                 
                 _patrolPoints.Add(_patrolPoints[i] + distance/length);
             }
+
+            EnterPatrol();
         }
 
         private void Update()

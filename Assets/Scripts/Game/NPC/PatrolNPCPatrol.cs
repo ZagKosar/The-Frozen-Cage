@@ -31,8 +31,14 @@ namespace Scripts.Game.NPC
 
         private void PatrolBehavior()
         {
+            var patrolPos = _splineContainer.EvaluatePosition(_t);
+
             if (Time.time < _waitEndTime)
+            {
+                _agent.SetDestination(patrolPos);
+                _animator?.SetFloat(SpeedParam, _agent.isStopped ? 0f : 0.3f);
                 return;
+            }
 
             _t += (Time.deltaTime * _patrolSpeed * _multiplier) / _splineContainer.Spline.GetLength();
 
@@ -41,10 +47,9 @@ namespace Scripts.Game.NPC
             if (_t <= 0)
                 _multiplier = 1f;
 
-            Vector3 position = _splineContainer.EvaluatePosition(_t);
+            _agent.SetDestination(_splineContainer.EvaluatePosition(_t));
 
-            _agent.SetDestination(position);
-
+            _animator?.SetFloat(SpeedParam, _agent.isStopped ? 0f : 0.3f);
             CheckForWait();
         }
 
@@ -99,6 +104,10 @@ namespace Scripts.Game.NPC
         {
             _currentState = State.Patrol;
             _agent.speed = _patrolSpeed;
+            _agent.isStopped = false;
+            _animator?.SetFloat(SpeedParam, 0.3f);
+            var distance = Vector3.Distance(transform.position, _splineContainer.EvaluatePosition(_t));
+            _waitEndTime = Time.time + distance / Mathf.Max(_patrolSpeed, 0.1f);
         }
     }
 }
