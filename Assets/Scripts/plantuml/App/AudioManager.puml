@@ -1,0 +1,18 @@
+@startuml
+class AudioManager {
+    + Initialize() : void
+    + SetMasterVolume(volume:float) : void
+    + SetMusicVolume(volume:float) : void
+    + SetSFXVolume(volume:float) : void
+    + PlaySound(name:string) : void
+    + StopSound() : void
+    + PauseSound() : void
+    + ResumeSound() : void
+}
+class SoundPack {
+    + Name : string
+    + Loop : bool
+}
+MonoBehaviour <|-- AudioManager
+SoundPack --> "AudioClip" AudioClip
+@enduml

@@ -1,0 +1,10 @@
+@startuml
+class PhotoGallery {
+    + SetPhotos(photos:List<string>) : void
+    + Add(photo:Texture2D) : void
+}
+class "IReadOnlyList`1"<T> {
+}
+PhotoGallery --> "PhotosBase64<string>" "IReadOnlyList`1"
+PhotoGallery --> "Photos<Sprite>" "IReadOnlyList`1"
+@enduml

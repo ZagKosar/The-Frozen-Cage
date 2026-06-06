@@ -1,0 +1,10 @@
+@startuml
+class EventManager {
+    + Subscribe(action:Action<T>) : void
+    + Unsubscribe(action:Action<T>) : void
+    + Invoke(data:T) : void
+    + ClearAll() : void
+    + CleanupDestroyedSubscribers() : void
+}
+EventManager --> "Instance" EventManager
+@enduml

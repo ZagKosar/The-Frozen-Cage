@@ -1,0 +1,23 @@
+@startuml
+class PreviewEvent {
+}
+struct Drag {
+}
+struct ShowNext {
+}
+struct ShowPrevious {
+}
+struct Show {
+}
+PreviewEvent +-- Drag
+Drag --> "Delta" Vector2
+PreviewEvent +-- ShowNext
+ShowNext --> "NextModel" Transform
+ShowNext --> "Scale" Vector3
+PreviewEvent +-- ShowPrevious
+ShowPrevious --> "PreviousModel" Transform
+ShowPrevious --> "Scale" Vector3
+PreviewEvent +-- Show
+Show --> "Model" Transform
+Show --> "Scale" Vector3
+@enduml

@@ -1,0 +1,9 @@
+@startuml
+class Item {
+    + Id : int <<get>>
+    + Name : string <<get>>
+    + Description : string <<get>>
+}
+Item --> "Model" Transform
+Item --> "PreviewScale" Vector3
+@enduml

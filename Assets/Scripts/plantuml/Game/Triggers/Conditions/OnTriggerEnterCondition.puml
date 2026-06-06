@@ -1,0 +1,7 @@
+@startuml
+class OnTriggerEnterCondition {
+    +  <<event>> Complete : Action 
+    + Initialize() : void
+}
+ICondition <|-- OnTriggerEnterCondition
+@enduml

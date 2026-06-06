@@ -1,0 +1,7 @@
+@startuml
+abstract class Interactable {
+    + {abstract} InteractDescription : string <<get>>
+    + {abstract} Interact() : void
+}
+MonoBehaviour <|-- Interactable
+@enduml

@@ -1,0 +1,7 @@
+@startuml
+class Presenter {
+    + Play() : void
+    + Stop() : void
+}
+MonoBehaviour <|-- Presenter
+@enduml

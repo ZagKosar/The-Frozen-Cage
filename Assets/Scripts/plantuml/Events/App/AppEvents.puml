@@ -1,0 +1,15 @@
+@startuml
+class AppEvents {
+}
+struct Save {
+    + Slot : int
+}
+struct Load {
+    + Slot : int
+}
+struct StartSceneSwitching {
+}
+AppEvents +-- Save
+AppEvents +-- Load
+AppEvents +-- StartSceneSwitching
+@enduml

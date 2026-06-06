@@ -1,0 +1,5 @@
+@startuml
+class PreviewShower {
+}
+MonoBehaviour <|-- PreviewShower
+@enduml

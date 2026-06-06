@@ -1,0 +1,5 @@
+@startuml
+class ScrollHealth {
+}
+MonoBehaviour <|-- ScrollHealth
+@enduml

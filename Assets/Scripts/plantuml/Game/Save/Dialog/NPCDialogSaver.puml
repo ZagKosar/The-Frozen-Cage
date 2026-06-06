@@ -1,0 +1,8 @@
+@startuml
+class NPCDialogSaver {
+    + <<override>> Key : string <<get>>
+    + <<override>> Save() : JObject
+    + <<override>> Load(data:JObject) : bool
+}
+BaseSaver <|-- NPCDialogSaver
+@enduml

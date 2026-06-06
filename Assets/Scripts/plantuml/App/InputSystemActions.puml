@@ -1,0 +1,87 @@
+@startuml
+class "@InputSystemActions" <<partial>> {
+    + @InputSystemActions()
+    + Dispose() : void
+    + Contains(action:InputAction) : bool
+    + GetEnumerator() : IEnumerator<InputAction>
+    + Enable() : void
+    + Disable() : void
+    + FindAction(actionNameOrId:string, throwIfNotFound:bool) : InputAction
+    + FindBinding(bindingMask:InputBinding, action:InputAction) : int
+}
+class "ReadOnlyArray`1"<T> {
+}
+class "IEnumerable`1"<T> {
+}
+struct PlayerActions {
+    + PlayerActions(wrapper:@InputSystemActions)
+    + Get() : InputActionMap
+    + Enable() : void
+    + Disable() : void
+    + enabled : bool <<get>>
+    + AddCallbacks(instance:IPlayerActions) : void
+    + RemoveCallbacks(instance:IPlayerActions) : void
+    + SetCallbacks(instance:IPlayerActions) : void
+}
+struct UIActions {
+    + UIActions(wrapper:@InputSystemActions)
+    + Get() : InputActionMap
+    + Enable() : void
+    + Disable() : void
+    + enabled : bool <<get>>
+    + AddCallbacks(instance:IUIActions) : void
+    + RemoveCallbacks(instance:IUIActions) : void
+    + SetCallbacks(instance:IUIActions) : void
+}
+struct GameActions {
+    + GameActions(wrapper:@InputSystemActions)
+    + Get() : InputActionMap
+    + Enable() : void
+    + Disable() : void
+    + enabled : bool <<get>>
+    + AddCallbacks(instance:IGameActions) : void
+    + RemoveCallbacks(instance:IGameActions) : void
+    + SetCallbacks(instance:IGameActions) : void
+}
+interface IPlayerActions {
+}
+interface IUIActions {
+}
+interface IGameActions {
+}
+IInputActionCollection2 <|-- "@InputSystemActions"
+IDisposable <|-- "@InputSystemActions"
+"@InputSystemActions" --> "asset" InputActionAsset
+"@InputSystemActions" --> "bindingMask" InputBinding
+"@InputSystemActions" --> "devices<InputDevice>" "ReadOnlyArray`1"
+"@InputSystemActions" --> "controlSchemes<InputControlScheme>" "ReadOnlyArray`1"
+"@InputSystemActions" --> "bindings<InputBinding>" "IEnumerable`1"
+"@InputSystemActions" --> "@Player" PlayerActions
+"@InputSystemActions" --> "@UI" UIActions
+"@InputSystemActions" --> "@Game" GameActions
+"@InputSystemActions" --> "KeyboardMouseScheme" InputControlScheme
+"@InputSystemActions" --> "GamepadScheme" InputControlScheme
+"@InputSystemActions" --> "TouchScheme" InputControlScheme
+"@InputSystemActions" --> "JoystickScheme" InputControlScheme
+"@InputSystemActions" --> "XRScheme" InputControlScheme
+"@InputSystemActions" +-- PlayerActions
+PlayerActions --> "@Move" InputAction
+PlayerActions --> "@Look" InputAction
+PlayerActions --> "@Interact" InputAction
+PlayerActions --> "@Crouch" InputAction
+PlayerActions --> "@Sprint" InputAction
+PlayerActions --> "@Flashlight" InputAction
+PlayerActions --> "@Action" InputAction
+PlayerActions --> "@ExtraAction" InputAction
+PlayerActions --> "@Inventory" InputAction
+"@InputSystemActions" +-- UIActions
+UIActions --> "@Submit" InputAction
+UIActions --> "@Cancel" InputAction
+UIActions --> "@Next" InputAction
+UIActions --> "@Previous" InputAction
+"@InputSystemActions" +-- GameActions
+GameActions --> "@Pause" InputAction
+"@InputSystemActions" +-- IPlayerActions
+"@InputSystemActions" +-- IUIActions
+"@InputSystemActions" +-- IGameActions
+@enduml

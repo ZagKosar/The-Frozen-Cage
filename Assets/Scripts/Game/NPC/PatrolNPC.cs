@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.AI;
@@ -18,6 +19,8 @@ namespace Scripts.Game.NPC
 
         private Transform _player;
         
+        private List<float> _patrolPoints = new List<float>();
+
         private State _currentState;
         
         private enum State {Patrol,Chase,Search}
@@ -28,6 +31,21 @@ namespace Scripts.Game.NPC
             _currentState = State.Patrol;
             _agent.speed = _patrolSpeed;
             _agent.autoBraking = true;
+            
+            var knots = _splineContainer.Spline.Knots.ToList();
+            var length = _splineContainer.CalculateLength();
+            
+            _patrolPoints.Add(0);
+            
+            for (int i = 0; i < knots.Count - 1; i++)
+            {
+                Vector3 knot = knots[i].Position;
+                Vector3 nextKnot = knots[i + 1].Position;
+                
+                var distance = Vector3.Distance(knot, nextKnot);
+                
+                _patrolPoints.Add(_patrolPoints[i] + distance/length);
+            }
         }
 
         private void Update()
@@ -52,19 +70,27 @@ namespace Scripts.Game.NPC
 
         private bool CanSeePlayer()
         {
-            var dir = (_player.position - _eyeTransform.position).normalized;
             var distance = Vector3.Distance(_eyeTransform.position, _player.position);
             
             if (distance >  _viewDistance)
                 return false;
             
-            if (Vector3.Angle(transform.forward, dir) > _viewAngle * 0.5f)
+            var dir = (_player.position - _eyeTransform.position).normalized;
+            var angle = Vector3.Angle(_eyeTransform.forward, dir);
+            
+            if (angle > _viewAngle * 0.5f)
                 return false;
             
             if (Physics.Raycast(_eyeTransform.position, dir, distance,  _obstacleLayerMask))
                 return false;
             
             return true;
+        }
+
+        [Button]
+        private void TestFunc(Vector3 pos)
+        {
+            _agent.SetDestination(pos);
         }
     }
 }

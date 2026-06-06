@@ -1,0 +1,10 @@
+@startuml
+class InventoryWindow {
+    + <<override>> Priority : int <<get>>
+    + <<override>> Load() : void
+    + <<override>> Destroy() : void
+    + <<override>> Open(context:object) : void
+    + <<override>> Close() : void
+}
+WindowPanel <|-- InventoryWindow
+@enduml

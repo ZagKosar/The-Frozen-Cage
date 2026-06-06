@@ -1,0 +1,10 @@
+@startuml
+class DialogNode {
+    + ID : string
+    + Text : string
+}
+class "List`1"<T> {
+}
+ScriptableObject <|-- DialogNode
+DialogNode o-> "DialogСhoice<DialogСhoice>" "List`1"
+@enduml

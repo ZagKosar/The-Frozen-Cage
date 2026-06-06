@@ -1,0 +1,7 @@
+@startuml
+class DialogSystem {
+    + Initialize() : void
+    + TryGetNode(id:string, node:DialogNode) : bool
+    + TryGetChoice(id:string, choice:DialogСhoice) : bool
+}
+@enduml

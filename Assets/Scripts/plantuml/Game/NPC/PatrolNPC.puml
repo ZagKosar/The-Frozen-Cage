@@ -1,0 +1,11 @@
+@startuml
+class PatrolNPC <<partial>> {
+}
+enum State {
+    Patrol,
+    Chase,
+    Search,
+}
+MonoBehaviour <|-- PatrolNPC
+PatrolNPC +-- State
+@enduml

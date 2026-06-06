@@ -1,0 +1,13 @@
+@startuml
+class Inventory {
+    + AddItem(id:int, amount:int) : void
+    + RemoveItem(id:int, amount:int) : void
+}
+class InventoryItem {
+    + Id : int
+    + Amount : int
+}
+class "IReadOnlyList`1"<T> {
+}
+Inventory --> "Items<InventoryItem>" "IReadOnlyList`1"
+@enduml

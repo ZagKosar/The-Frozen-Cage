@@ -1,0 +1,6 @@
+@startuml
+class DialogIDProvider <<static>> {
+    + {static} GetAllNodeIds() : IEnumerable<ValueDropdownItem<string>>
+    + {static} GetAllChoiceIds() : IEnumerable<ValueDropdownItem<string>>
+}
+@enduml

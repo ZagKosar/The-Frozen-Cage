@@ -1,0 +1,16 @@
+@startuml
+class Constants <<static>> <<partial>> {
+    + {static} <<readonly>> MainMenuWindow : string = "main_menu_panel"
+    + {static} <<readonly>> SettingsPopUp : string = "settings_panel"
+    + {static} <<readonly>> InventoryWindow : string = "inventory_window"
+    + {static} <<readonly>> PauseWindow : string = "pause_window"
+    + {static} <<readonly>> PlayerGUI : string = "player_gui"
+    + {static} <<readonly>> SaveWindow : string = "save_window"
+    + {static} <<readonly>> LoadingWindow : string = "loading_window"
+    + {static} <<readonly>> DialogWindow : string = "dialog_window"
+    + {static} <<readonly>> GalleryWindow : string = "gallery_window"
+}
+class "IReadOnlyList`1"<T> {
+}
+Constants o-> "AllWindows<string>" "IReadOnlyList`1"
+@enduml

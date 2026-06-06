@@ -1,0 +1,15 @@
+@startuml
+class DialogEvent <<static>> {
+}
+struct OpenDialog {
+    + NodeID : string
+}
+struct OnChoice {
+    + ChoiceID : string
+}
+struct CloseDialog {
+}
+DialogEvent +-- OpenDialog
+DialogEvent +-- OnChoice
+DialogEvent +-- CloseDialog
+@enduml

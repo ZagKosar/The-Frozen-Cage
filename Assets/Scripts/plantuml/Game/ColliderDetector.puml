@@ -1,0 +1,9 @@
+@startuml
+class ColliderDetector {
+    +  <<event>> CollisionEnter : Action<Collision> 
+    +  <<event>> CollisionExit : Action<Collision> 
+    +  <<event>> TriggerEnter : Action<Collider> 
+    +  <<event>> TriggerExit : Action<Collider> 
+}
+MonoBehaviour <|-- ColliderDetector
+@enduml

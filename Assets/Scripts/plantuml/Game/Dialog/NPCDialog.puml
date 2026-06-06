@@ -1,0 +1,9 @@
+@startuml
+class NPCDialog {
+    + <<override>> InteractDescription : string <<get>>
+    + StartNodeID : string <<get>>
+    + <<override>> Interact() : void
+    + SetStartNode(nodeID:string) : void
+}
+Interactable <|-- NPCDialog
+@enduml

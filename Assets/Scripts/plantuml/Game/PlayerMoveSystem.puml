@@ -1,0 +1,9 @@
+@startuml
+class PlayerMoveSystem {
+    + IsSprinting : bool <<get>>
+    + IsCrouching : bool <<get>>
+    + IsMoving : bool <<get>>
+    +  <<event>> OnStep : Action<float> 
+}
+MonoBehaviour <|-- PlayerMoveSystem
+@enduml

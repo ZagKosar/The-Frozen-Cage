@@ -1,0 +1,11 @@
+@startuml
+class PhotoCamera {
+    + <<override>> IsEquiped : bool <<get>> <<set>>
+    + <<override>> Initialize() : void
+    + <<override>> Pickup() : void
+    + <<override>> Unequipe() : void
+    + <<override>> Use() : void
+    + <<override>> AltUse() : void
+}
+UsableItem <|-- PhotoCamera
+@enduml

@@ -1,0 +1,8 @@
+@startuml
+class YesNoPopup {
+    +  <<event>> Result : Action<bool> 
+    + Show() : void
+    + Hide() : void
+}
+MonoBehaviour <|-- YesNoPopup
+@enduml

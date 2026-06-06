@@ -1,0 +1,10 @@
+@startuml
+class PlayerGUI {
+    + <<override>> Priority : int <<get>>
+    + <<override>> Open(context:object) : void
+    + <<override>> Close() : void
+    + <<override>> Load() : void
+    + <<override>> Destroy() : void
+}
+WindowPanel <|-- PlayerGUI
+@enduml

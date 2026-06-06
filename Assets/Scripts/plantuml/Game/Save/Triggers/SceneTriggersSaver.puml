@@ -1,0 +1,8 @@
+@startuml
+class SceneTriggersSaver {
+    + <<override>> Key : string <<get>>
+    + <<override>> Save() : JObject
+    + <<override>> Load(data:JObject) : bool
+}
+BaseSaver <|-- SceneTriggersSaver
+@enduml

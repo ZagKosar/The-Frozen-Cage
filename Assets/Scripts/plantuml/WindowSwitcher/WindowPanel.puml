@@ -1,0 +1,10 @@
+@startuml
+abstract class WindowPanel {
+    + {abstract} Priority : int <<get>>
+    + {abstract} Load() : void
+    + {abstract} Destroy() : void
+    + {abstract} Open(context:object) : void
+    + {abstract} Close() : void
+}
+MonoBehaviour <|-- WindowPanel
+@enduml

@@ -1,0 +1,8 @@
+@startuml
+class DragbleUIElement {
+    +  <<event>> Drag : Action<Vector2> 
+    + OnDrag(eventData:PointerEventData) : void
+}
+MonoBehaviour <|-- DragbleUIElement
+IDragHandler <|-- DragbleUIElement
+@enduml

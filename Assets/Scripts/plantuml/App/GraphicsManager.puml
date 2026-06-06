@@ -1,0 +1,11 @@
+@startuml
+class GraphicsManager {
+    + Initialize() : void
+    + ApplyAll() : void
+    + ApplyScreenMode(mode:FullScreenMode) : void
+    + ApplyResolution(width:int, height:int) : void
+    + ApplyVSync(enabled:bool) : void
+    + ApplyBrightness(value01:float) : void
+}
+MonoBehaviour <|-- GraphicsManager
+@enduml

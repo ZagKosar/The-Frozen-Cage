@@ -1,0 +1,8 @@
+@startuml
+abstract class BaseSaver {
+    + {abstract} Key : string <<get>>
+    + {abstract} Save() : JObject
+    + {abstract} Load(data:JObject) : bool
+}
+MonoBehaviour <|-- BaseSaver
+@enduml

@@ -1,0 +1,25 @@
+@startuml
+class InputHandler {
+    + EnablePlayer : bool <<set>> <<get>>
+    + EnableUI : bool <<set>> <<get>>
+    + EnableGame : bool <<set>> <<get>>
+    +  <<event>> OnMove : Action<Vector2> 
+    +  <<event>> OnLook : Action<Vector2> 
+    +  <<event>> OnInteract : Action 
+    +  <<event>> OnCrouchStart : Action 
+    +  <<event>> OnCrouchStop : Action 
+    +  <<event>> OnSprintStart : Action 
+    +  <<event>> OnSprintStop : Action 
+    +  <<event>> OnFlashlight : Action 
+    +  <<event>> OnAction : Action 
+    +  <<event>> OnExtraAction : Action 
+    +  <<event>> OnSubmit : Action 
+    +  <<event>> OnCancel : Action 
+    +  <<event>> OnNext : Action 
+    +  <<event>> OnPrevious : Action 
+    +  <<event>> OnPause : Action 
+    +  <<event>> OnInventory : Action 
+    + Initialize() : void
+}
+MonoBehaviour <|-- InputHandler
+@enduml

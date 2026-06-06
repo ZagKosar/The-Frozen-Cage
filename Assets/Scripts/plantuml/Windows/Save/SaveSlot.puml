@@ -1,0 +1,7 @@
+@startuml
+class SaveSlot {
+    + UpdateSlot(slot:int, isEmpty:bool) : void
+}
+MonoBehaviour <|-- SaveSlot
+SaveSlot --> "Click" Action
+@enduml

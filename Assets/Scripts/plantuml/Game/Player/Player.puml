@@ -1,0 +1,8 @@
+@startuml
+class Player {
+    + OnEnable() : void
+    + SetInventory(inventory:Inventory) : void
+}
+MonoBehaviour <|-- Player
+Player --> "Inventory" Inventory
+@enduml

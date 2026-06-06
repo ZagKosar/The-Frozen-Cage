@@ -1,0 +1,10 @@
+@startuml
+class PickableItem {
+    + Id : int <<get>>
+    + Amount : int <<get>>
+    +  <<event>> PickedUp : Action 
+    + <<override>> InteractDescription : string <<get>>
+    + <<override>> Interact() : void
+}
+Interactable <|-- PickableItem
+@enduml

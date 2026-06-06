@@ -1,0 +1,6 @@
+@startuml
+interface ICondition {
+    +  <<event>> Complete : Action 
+    + Initialize() : void
+}
+@enduml

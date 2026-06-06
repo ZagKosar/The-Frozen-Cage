@@ -1,0 +1,37 @@
+@startuml
+class GameEvent {
+}
+struct Pause {
+}
+struct InteractHover {
+}
+struct InteractHoverEnd {
+}
+struct AddItem {
+    + Id : int
+    + Amount : int
+}
+struct InnerDialogue {
+    + Text : string
+}
+struct LoadNextScene {
+}
+struct OnPlayerItemEquip {
+}
+struct OnPlayerItemUnEquip {
+}
+struct OnGallery {
+}
+GameEvent +-- Pause
+GameEvent +-- InteractHover
+InteractHover --> "Interact" Interactable
+GameEvent +-- InteractHoverEnd
+InteractHoverEnd --> "Interact" Interactable
+GameEvent +-- AddItem
+GameEvent +-- InnerDialogue
+GameEvent +-- LoadNextScene
+GameEvent +-- OnPlayerItemEquip
+OnPlayerItemEquip --> "UsableItem" UsableItem
+GameEvent +-- OnPlayerItemUnEquip
+GameEvent +-- OnGallery
+@enduml

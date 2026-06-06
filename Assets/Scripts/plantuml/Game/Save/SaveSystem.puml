@@ -1,0 +1,7 @@
+@startuml
+class SaveSystem {
+    + Save(saveSlot:int) : void
+    + GetSaveSceneIndex(saveSlot:int) : int
+    + Load(saveSlot:int) : void
+}
+@enduml

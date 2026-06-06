@@ -1,0 +1,29 @@
+@startuml
+class UIEvents {
+}
+struct OpenWindow {
+    + Name : string
+}
+struct OpenWindowWithContext {
+    + Name : string
+    + Context : object
+}
+struct CloseWindow {
+    + Name : string
+}
+struct CloseLastWindow {
+}
+struct QuitGame {
+}
+struct StartNewGame {
+}
+struct ExitToMainMenu {
+}
+UIEvents +-- OpenWindow
+UIEvents +-- OpenWindowWithContext
+UIEvents +-- CloseWindow
+UIEvents +-- CloseLastWindow
+UIEvents +-- QuitGame
+UIEvents +-- StartNewGame
+UIEvents +-- ExitToMainMenu
+@enduml

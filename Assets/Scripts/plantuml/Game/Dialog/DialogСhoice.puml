@@ -1,0 +1,11 @@
+@startuml
+class DialogСhoice {
+    + ID : string
+    + Text : string
+    + NextNodeID : string
+    + NextIsStart : bool
+}
+class "List`1"<T> {
+}
+DialogСhoice --> "Actions<IDialogAction>" "List`1"
+@enduml

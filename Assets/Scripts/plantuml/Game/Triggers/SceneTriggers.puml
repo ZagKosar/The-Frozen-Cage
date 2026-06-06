@@ -1,0 +1,9 @@
+@startuml
+class SceneTriggers {
+    + SetTriggers(triggers:List<Trigger>) : void
+}
+class "IReadOnlyList`1"<T> {
+}
+MonoBehaviour <|-- SceneTriggers
+SceneTriggers --> "Triggers<Trigger>" "IReadOnlyList`1"
+@enduml

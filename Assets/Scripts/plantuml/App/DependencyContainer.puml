@@ -1,0 +1,17 @@
+@startuml
+class DependencyContainer {
+    + Initialize() : void
+}
+MonoBehaviour <|-- DependencyContainer
+DependencyContainer --> "Instance" DependencyContainer
+DependencyContainer --> "ClientSettings" ClientSettings
+DependencyContainer --> "DialogSystem" DialogSystem
+DependencyContainer --> "GraphicsMaster" GraphicsManager
+DependencyContainer --> "AudioMaster" AudioManager
+DependencyContainer --> "GameTime" GameTime
+DependencyContainer --> "InputHandler" InputHandler
+DependencyContainer --> "ItemsLibrary" ItemsLibrary
+DependencyContainer --> "PhotoGallery" PhotoGallery
+DependencyContainer --> "Player" Player
+DependencyContainer --> "Inventory" Inventory
+@enduml

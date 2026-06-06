@@ -1,0 +1,10 @@
+@startuml
+class Switcher {
+    + Value : bool <<get>>
+    + SetWithoutNotify(isOn:bool) : void
+}
+class "Action`1"<T> {
+}
+MonoBehaviour <|-- Switcher
+Switcher --> "Switch<bool>" "Action`1"
+@enduml

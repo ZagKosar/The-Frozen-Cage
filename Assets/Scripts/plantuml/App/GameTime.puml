@@ -1,0 +1,8 @@
+@startuml
+class GameTime {
+    + Time : float <<get>>
+    + DeltaTime : float <<get>>
+    + Update(deltaTime:float) : void
+    + Reset() : void
+}
+@enduml

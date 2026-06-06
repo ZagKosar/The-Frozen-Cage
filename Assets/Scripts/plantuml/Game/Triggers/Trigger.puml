@@ -1,0 +1,15 @@
+@startuml
+class Trigger {
+    + GUID : string <<get>>
+    + EnableOnStart : bool <<get>>
+    + PlayOnce : bool <<get>>
+    + Enabled : bool <<get>>
+    + UpdateData(trigger:Trigger) : void
+    + Enable() : void
+    + Disable() : void
+    + Run() : void
+}
+class "Action`1"<T> {
+}
+Trigger --> "CanRun<Trigger>" "Action`1"
+@enduml

@@ -1,0 +1,5 @@
+@startuml
+class Flashlight {
+}
+MonoBehaviour <|-- Flashlight
+@enduml

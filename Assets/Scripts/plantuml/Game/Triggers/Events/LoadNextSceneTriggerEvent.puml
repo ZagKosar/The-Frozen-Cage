@@ -1,0 +1,6 @@
+@startuml
+class LoadNextSceneTriggerEvent {
+    + Run() : void
+}
+ITriggerEvent <|-- LoadNextSceneTriggerEvent
+@enduml

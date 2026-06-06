@@ -1,0 +1,6 @@
+@startuml
+class Photo {
+    + SetImage(sprite:Sprite) : void
+}
+MonoBehaviour <|-- Photo
+@enduml

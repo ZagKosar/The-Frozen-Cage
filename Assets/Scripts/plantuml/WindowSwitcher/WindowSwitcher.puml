@@ -1,0 +1,13 @@
+@startuml
+class WindowSwitcher {
+    + Initialize() : void
+    + ShowWindow(name:string, closePrevious:bool, context:object) : void
+    + CloseWindow(name:string) : void
+    + CloseLast() : void
+}
+class Window {
+    + Name : string
+}
+MonoBehaviour <|-- WindowSwitcher
+Window --> "Panel" WindowPanel
+@enduml

@@ -1,0 +1,10 @@
+@startuml
+class SaveWindow {
+    + <<override>> Priority : int <<get>>
+    + <<override>> Open(context:object) : void
+    + <<override>> Close() : void
+    + <<override>> Load() : void
+    + <<override>> Destroy() : void
+}
+WindowPanel <|-- SaveWindow
+@enduml

@@ -6,9 +6,7 @@ using UnityEngine.SceneManagement;
 public class EventManager
 {
     private static EventManager s_instance;
-    /// <summary>
-    /// Получение созданного объекта
-    /// </summary>
+
     public static EventManager Instance
     {
         get
@@ -19,11 +17,6 @@ public class EventManager
     }
 
     private Dictionary<Type, List<Delegate>> eventSubscribers = new Dictionary<Type, List<Delegate>>();
-    /// <summary>
-    /// Subscribe - подписка что бы ждать Invoke()
-    /// </summary>
-    /// <typeparam name="T">Вид события</typeparam>
-    /// <param name="action"> Действие которое срабатывает при получении события(звонка) </param>
 
     private bool _isSceneListening = false;
 
@@ -82,9 +75,6 @@ public class EventManager
         eventSubscribers.Clear();
     }
 
-    /// <summary>
-    /// Удаляет подписки, чьи целевые объекты были уничтожены
-    /// </summary>
     public void CleanupDestroyedSubscribers()
     {
         foreach (var kvp in eventSubscribers)
@@ -92,7 +82,7 @@ public class EventManager
             kvp.Value.RemoveAll(d =>
             {
                 if (d.Target is MonoBehaviour mb)
-                    return mb == null; // Unity null check — объект уничтожен
+                    return mb == null;
                 return false;
             });
         }

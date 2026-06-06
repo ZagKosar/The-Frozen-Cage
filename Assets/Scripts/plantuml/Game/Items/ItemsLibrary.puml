@@ -1,0 +1,10 @@
+@startuml
+class ItemsLibrary {
+    + Initialize() : void
+    + TryGetItem(id:int, item:Item) : bool
+}
+class "IReadOnlyList`1"<T> {
+}
+ScriptableObject <|-- ItemsLibrary
+ItemsLibrary --> "Items<Item>" "IReadOnlyList`1"
+@enduml

@@ -137,6 +137,10 @@ namespace Scripts.Game
         private void OnOpenDialog(DialogEvent.OpenDialog data)
         {
             var inputHandler = DependencyContainer.InputHandler;
+            var dialogSystem = DependencyContainer.DialogSystem;
+            
+            if (!dialogSystem.TryGetNode(data.NodeID, out _ ))
+                return;
             
             _isPaused = true;
 

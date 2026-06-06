@@ -1,0 +1,7 @@
+@startuml
+class OrCondition {
+    +  <<event>> Complete : Action 
+    + Initialize() : void
+}
+ICondition <|-- OrCondition
+@enduml

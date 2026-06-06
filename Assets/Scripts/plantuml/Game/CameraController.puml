@@ -1,0 +1,6 @@
+@startuml
+class CameraController {
+    + SetMouseLock(isLocked:bool) : void
+}
+MonoBehaviour <|-- CameraController
+@enduml

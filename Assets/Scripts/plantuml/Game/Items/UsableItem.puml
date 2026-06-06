@@ -1,0 +1,11 @@
+@startuml
+abstract class UsableItem {
+    + {abstract} IsEquiped : bool <<get>> <<set>>
+    + <<virtual>> Initialize() : void
+    + {abstract} Pickup() : void
+    + {abstract} Unequipe() : void
+    + {abstract} Use() : void
+    + {abstract} AltUse() : void
+}
+Item <|-- UsableItem
+@enduml

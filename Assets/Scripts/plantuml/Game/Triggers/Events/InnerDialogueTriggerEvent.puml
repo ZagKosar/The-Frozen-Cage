@@ -1,0 +1,6 @@
+@startuml
+class InnerDialogueTriggerEvent {
+    + Run() : void
+}
+ITriggerEvent <|-- InnerDialogueTriggerEvent
+@enduml

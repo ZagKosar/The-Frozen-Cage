@@ -1,0 +1,7 @@
+@startuml
+class ItemPickedUp {
+    +  <<event>> Complete : Action 
+    + Initialize() : void
+}
+ICondition <|-- ItemPickedUp
+@enduml

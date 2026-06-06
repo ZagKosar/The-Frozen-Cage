@@ -1,0 +1,7 @@
+@startuml
+class DialogWindowChoice {
+    + SetInfo(text:string) : void
+}
+MonoBehaviour <|-- DialogWindowChoice
+DialogWindowChoice --> "Choiced" Action
+@enduml

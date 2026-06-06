@@ -1,0 +1,42 @@
+@startuml
+class ClientSettings {
+    + Save() : void
+    + Load() : void
+    + Clone() : ClientSettings
+    + CopyFrom(other:ClientSettings) : void
+    + EqualsTo(other:ClientSettings, epsilon:float) : bool
+}
+class GameSettings {
+    + MouseSensitivity : float <<get>> <<set>>
+    + TextSpeed : float <<get>> <<set>>
+    + Subtitles : bool <<get>> <<set>>
+    + Clone() : GameSettings
+    + CopyFrom(other:GameSettings) : void
+    + EqualsTo(other:GameSettings, epsilon:float) : bool
+}
+class GraphicsSettings {
+    + ResolutionWidth : int <<get>> <<set>>
+    + ResolutionHeight : int <<get>> <<set>>
+    + Brightness : float <<get>> <<set>>
+    + VSync : bool <<get>> <<set>>
+    + Clone() : GraphicsSettings
+    + CopyFrom(other:GraphicsSettings) : void
+    + EqualsTo(other:GraphicsSettings, epsilon:float) : bool
+}
+class AudioSettings {
+    + MasterVolume : float <<get>> <<set>>
+    + MusicVolume : float <<get>> <<set>>
+    + SFXVolume : float <<get>> <<set>>
+    + Clone() : AudioSettings
+    + CopyFrom(other:AudioSettings) : void
+    + EqualsTo(other:AudioSettings, epsilon:float) : bool
+}
+ClientSettings --> "GameSettings" GameSettings
+ClientSettings --> "GraphicsSettings" GraphicsSettings
+ClientSettings --> "AudioSettings" AudioSettings
+ClientSettings --> "Default" ClientSettings
+GameSettings --> "Default" GameSettings
+GraphicsSettings --> "ScreenMode" FullScreenMode
+GraphicsSettings --> "Default" GraphicsSettings
+AudioSettings --> "Default" AudioSettings
+@enduml
