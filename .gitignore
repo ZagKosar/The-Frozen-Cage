@@ -76,8 +76,8 @@ crashlytics-build.properties
 
 # Unity Builds
 Build/
-Build42/
 Builds/
+The Frozen Cage Alpha Build0.1/
 
 # Large Unity cache files
 *.assets.resS
