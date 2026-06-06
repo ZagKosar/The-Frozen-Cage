@@ -9,7 +9,10 @@ using UnityEngine;
 
 public class PickableItem : Interactable
 {
-    [SerializeField, ValueDropdown("GetItems")] private int _id;
+#if UNITY_EDITOR
+    [ValueDropdown("GetItems")]
+#endif
+    [SerializeField] private int _id;
     [SerializeField] private int _amount;
     [SerializeField] private string _interactDescription;
 

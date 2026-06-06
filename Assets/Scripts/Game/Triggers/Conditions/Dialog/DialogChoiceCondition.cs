@@ -13,7 +13,11 @@ namespace Scripts.Game.Triggers.Conditions.Dialog
     [Serializable]
     public class DialogChoiceCondition : ICondition
     {
-        [SerializeField, ValueDropdown(nameof(GetIds))] private string _choiceID;
+        
+#if UNITY_EDITOR
+        [ValueDropdown(nameof(GetIds))]
+#endif
+        [SerializeField] private string _choiceID;
 
         public event Action Complete;
 

@@ -14,7 +14,10 @@ namespace Scripts.Game.Dialog
     {
         public string ID;
         public string Text;
-        [ValueDropdown(nameof(GetIds))] public string NextNodeID;
+#if UNITY_EDITOR
+        [ValueDropdown(nameof(GetIds))]
+#endif
+        public string NextNodeID;
         public bool NextIsStart;
         public List<IDialogAction> Actions;
 

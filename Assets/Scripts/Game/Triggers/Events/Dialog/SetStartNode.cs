@@ -14,7 +14,10 @@ namespace Scripts.Game.Triggers.Events.Dialog
     public class SetStartNode : ITriggerEvent
     {
         [SerializeField] private NPCDialog _npc;
-        [SerializeField, ValueDropdown(nameof(GetIds))] private string _nodeID;
+#if UNITY_EDITOR
+        [ValueDropdown(nameof(GetIds))]
+#endif
+        [SerializeField] private string _nodeID;
 
         public void Run()
         {

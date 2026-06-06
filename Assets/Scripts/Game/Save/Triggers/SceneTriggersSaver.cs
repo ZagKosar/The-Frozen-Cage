@@ -2,13 +2,8 @@
 using Newtonsoft.Json.Linq;
 using Scripts.Game.Save.Utils;
 using Scripts.Game.Triggers;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
-using static UnityEditor.Experimental.GraphView.GraphView;
 
 namespace Scripts.Game.Save.Triggers
 {

@@ -11,6 +11,8 @@ namespace Scripts.App.ValueProvider
 {
     public static class DialogIDProvider
     {
+#if UNITY_EDITOR
+
         public static IEnumerable<ValueDropdownItem<string>> GetAllNodeIds()
         {
             var guids = AssetDatabase.FindAssets("t:DialogNode");
@@ -55,5 +57,7 @@ namespace Scripts.App.ValueProvider
                 }
             }
         }
+        
+#endif
     }
 }

@@ -4,18 +4,17 @@ using Sirenix.OdinInspector;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEditor.Experimental.GraphView;
 using UnityEngine;
-using static Scripts.Events.Game.DialogEvent;
 
 namespace Scripts.Game.Dialog
 {
     public class NPCDialog : Interactable
     {
         [SerializeField] private string _interactDescription;
-        [SerializeField, ValueDropdown(nameof(GetIds))] private string _startNodeID;
+#if UNITY_EDITOR
+        [ValueDropdown(nameof(GetIds))]
+#endif
+        [SerializeField] private string _startNodeID;
         [SerializeField] private Animator _animator;
 
         public override string InteractDescription => _interactDescription;
